@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using LogisticsAPI.Data;
+using LogisticsAPI.Middleware;
 using LogisticsAPI.Repositories;
 using LogisticsAPI.Services;
 
@@ -48,6 +49,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseErrorHandling();
+app.UseTenantMiddleware();
 app.UseHttpsRedirection();
 
 app.MapControllers();
