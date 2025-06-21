@@ -1,0 +1,11 @@
+SKU,Name,Description,Quantity,Location,UnitPrice,Category,Warehouse
+ELEC-001,Wireless Mouse,Ergonomic wireless mouse with USB receiver,150,Aisle 3 Shelf B,24.99,Electronics,Main Warehouse
+ELEC-002,Mechanical Keyboard,RGB mechanical keyboard with Cherry MX switches,75,Aisle 3 Shelf C,89.99,Electronics,Main Warehouse
+ELEC-003,USB-C Hub,7-port USB-C hub with HDMI output,200,Aisle 3 Shelf A,34.99,Electronics,Main Warehouse
+OFF-001,A4 Paper,Premium white A4 paper 500 sheets,500,Aisle 1 Shelf A,8.99,Office Supplies,Main Warehouse
+OFF-002,Ballpoint Pens,Box of 50 blue ballpoint pens,300,Aisle 1 Shelf B,12.50,Office Supplies,Main Warehouse
+FURN-001,Office Chair,Ergonomic office chair with lumbar support,25,Aisle 5 Shelf A,299.99,Furniture,Secondary Warehouse
+FURN-002,Standing Desk,Electric height-adjustable standing desk,15,Aisle 5 Shelf B,549.99,Furniture,Secondary Warehouse
+TOOL-001,Screwdriver Set,Professional 32-piece screwdriver set,100,Aisle 2 Shelf A,29.99,Tools,Main Warehouse
+TOOL-002,Power Drill,18V cordless power drill with battery,40,Aisle 2 Shelf C,149.99,Tools,Secondary Warehouse
+SAFE-001,Safety Goggles,ANSI Z87.1 certified safety goggles,250,Aisle 4 Shelf A,12.99,Safety Equipment,Main Warehouse

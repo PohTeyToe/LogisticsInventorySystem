@@ -24,6 +24,7 @@ builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();
 
 // Service registrations
 builder.Services.AddScoped<IInventoryService, InventoryService>();
+builder.Services.AddScoped<ICsvImportService, CsvImportService>();
 builder.Services.AddScoped<IReportingService, ReportingService>();
 
 builder.Services.AddControllers()
