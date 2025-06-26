@@ -1,0 +1,189 @@
+@page "/"
+@page "/dashboard"
+@inject HttpClient Http
+
+<PageTitle>Dashboard - Logistics Inventory</PageTitle>
+
+<h3>Dashboard</h3>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h5 class="card-title">Total Items</h5>
+                <h2>@totalItems</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h5 class="card-title">Total Value</h5>
+                <h2>@totalValue.ToString("C")</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <h5 class="card-title">Low Stock Alerts</h5>
+                <h2>@lowStockCount</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <h5 class="card-title">Categories</h5>
+                <h2>@categoryCount</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (lowStockAlerts != null && lowStockAlerts.Any())
+{
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">Low Stock Alerts</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>SKU</th>
+                        <th>Name</th>
+                        <th>Current Qty</th>
+                        <th>Reorder Level</th>
+                        <th>Warehouse</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var alert in lowStockAlerts)
+                    {
+                        <tr>
+                            <td>@alert.SKU</td>
+                            <td>@alert.Name</td>
+                            <td class="text-danger fw-bold">@alert.CurrentQuantity</td>
+                            <td>@alert.ReorderLevel</td>
+                            <td>@(alert.WarehouseName ?? "N/A")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@if (recentMovements != null && recentMovements.Any())
+{
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Recent Stock Movements</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Type</th>
+                        <th>Quantity</th>
+                        <th>Reason</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var movement in recentMovements.Take(10))
+                    {
+                        <tr>
+                            <td>@movement.ItemName</td>
+                            <td>
+                                <span class="badge @GetMovementBadgeClass(movement.Type)">
+                                    @movement.Type
+                                </span>
+                            </td>
+                            <td>@movement.Quantity</td>
+                            <td>@(movement.Reason ?? "-")</td>
+                            <td>@movement.Timestamp.ToString("g")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@code {
+    private int totalItems;
+    private decimal totalValue;
+    private int lowStockCount;
+    private int categoryCount;
+    private List<LowStockAlert>? lowStockAlerts;
+    private List<StockMovementDto>? recentMovements;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var valuation = await Http.GetFromJsonAsync<ValuationReport>("api/report/valuation");
+            if (valuation != null)
+            {
+                totalItems = valuation.TotalItems;
+                totalValue = valuation.TotalValue;
+            }
+
+            lowStockAlerts = await Http.GetFromJsonAsync<List<LowStockAlert>>("api/report/low-stock?threshold=10");
+            lowStockCount = lowStockAlerts?.Count ?? 0;
+
+            var categories = await Http.GetFromJsonAsync<List<CategoryDto>>("api/category");
+            categoryCount = categories?.Count ?? 0;
+
+            recentMovements = await Http.GetFromJsonAsync<List<StockMovementDto>>("api/stockmovement?limit=10");
+        }
+        catch (Exception)
+        {
+            // API not available - show defaults
+        }
+    }
+
+    private string GetMovementBadgeClass(string type) => type switch
+    {
+        "IN" => "bg-success",
+        "OUT" => "bg-danger",
+        "ADJUSTMENT" => "bg-info",
+        _ => "bg-secondary"
+    };
+
+    private class ValuationReport
+    {
+        public int TotalItems { get; set; }
+        public int TotalQuantity { get; set; }
+        public decimal TotalValue { get; set; }
+    }
+
+    private class LowStockAlert
+    {
+        public int ItemId { get; set; }
+        public string SKU { get; set; } = "";
+        public string Name { get; set; } = "";
+        public int CurrentQuantity { get; set; }
+        public int ReorderLevel { get; set; }
+        public string? WarehouseName { get; set; }
+    }
+
+    private class CategoryDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+    }
+
+    private class StockMovementDto
+    {
+        public int Id { get; set; }
+        public string ItemName { get; set; } = "";
+        public string Type { get; set; } = "";
+        public int Quantity { get; set; }
+        public string? Reason { get; set; }
+        public DateTime Timestamp { get; set; }
+    }
+}
