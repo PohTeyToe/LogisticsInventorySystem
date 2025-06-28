@@ -1,0 +1,261 @@
+@page "/inventory"
+@inject HttpClient Http
+
+<PageTitle>Inventory - Logistics Inventory</PageTitle>
+
+<h3>Inventory Management</h3>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <div class="input-group">
+            <input type="text" class="form-control" placeholder="Search by name or SKU..."
+                   @bind="searchTerm" @bind:event="oninput" />
+            <button class="btn btn-outline-primary" @onclick="SearchItems">Search</button>
+        </div>
+    </div>
+    <div class="col-md-6 text-end">
+        <button class="btn btn-primary" @onclick="ShowAddModal">Add Item</button>
+    </div>
+</div>
+
+@if (items == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!items.Any())
+{
+    <p>No inventory items found.</p>
+}
+else
+{
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>SKU</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Warehouse</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Value</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in items)
+            {
+                <tr class="@(item.Quantity <= item.ReorderLevel ? "table-warning" : "")">
+                    <td>@item.SKU</td>
+                    <td>@item.Name</td>
+                    <td>@(item.CategoryName ?? "-")</td>
+                    <td>@(item.WarehouseName ?? "-")</td>
+                    <td>@item.Quantity</td>
+                    <td>@item.UnitPrice.ToString("C")</td>
+                    <td>@((item.Quantity * item.UnitPrice).ToString("C"))</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" @onclick="() => EditItem(item)">Edit</button>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteItem(item.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="d-flex justify-content-between align-items-center">
+        <span>Showing @items.Count() of @totalCount items</span>
+        <div>
+            <button class="btn btn-sm btn-outline-secondary" disabled="@(currentPage <= 1)"
+                    @onclick="PreviousPage">Previous</button>
+            <span class="mx-2">Page @currentPage of @totalPages</span>
+            <button class="btn btn-sm btn-outline-secondary" disabled="@(currentPage >= totalPages)"
+                    @onclick="NextPage">Next</button>
+        </div>
+    </div>
+}
+
+@if (showModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(isEditing ? "Edit" : "Add") Inventory Item</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <EditForm Model="@editItem" OnValidSubmit="SaveItem">
+                    <DataAnnotationsValidator />
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">SKU</label>
+                            <InputText class="form-control" @bind-Value="editItem.SKU" disabled="@isEditing" />
+                            <ValidationMessage For="() => editItem.SKU" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <InputText class="form-control" @bind-Value="editItem.Name" />
+                            <ValidationMessage For="() => editItem.Name" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <InputTextArea class="form-control" @bind-Value="editItem.Description" />
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <label class="form-label">Quantity</label>
+                                <InputNumber class="form-control" @bind-Value="editItem.Quantity" />
+                                <ValidationMessage For="() => editItem.Quantity" />
+                            </div>
+                            <div class="col">
+                                <label class="form-label">Unit Price</label>
+                                <InputNumber class="form-control" @bind-Value="editItem.UnitPrice" />
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Location</label>
+                            <InputText class="form-control" @bind-Value="editItem.Location" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Reorder Level</label>
+                            <InputNumber class="form-control" @bind-Value="editItem.ReorderLevel" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private IEnumerable<InventoryItemDto>? items;
+    private string searchTerm = "";
+    private int currentPage = 1;
+    private int totalCount;
+    private int totalPages;
+    private bool showModal;
+    private bool isEditing;
+    private int editingId;
+    private ItemFormModel editItem = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadItems();
+    }
+
+    private async Task LoadItems()
+    {
+        try
+        {
+            var response = await Http.GetFromJsonAsync<PaginatedResult<InventoryItemDto>>(
+                $"api/inventory?page={currentPage}&pageSize=20&search={searchTerm}");
+            if (response != null)
+            {
+                items = response.Items;
+                totalCount = response.TotalCount;
+                totalPages = response.TotalPages;
+            }
+        }
+        catch
+        {
+            items = Enumerable.Empty<InventoryItemDto>();
+        }
+    }
+
+    private async Task SearchItems() => await LoadItems();
+    private async Task PreviousPage() { currentPage--; await LoadItems(); }
+    private async Task NextPage() { currentPage++; await LoadItems(); }
+
+    private void ShowAddModal()
+    {
+        editItem = new ItemFormModel();
+        isEditing = false;
+        showModal = true;
+    }
+
+    private void EditItem(InventoryItemDto item)
+    {
+        editItem = new ItemFormModel
+        {
+            SKU = item.SKU,
+            Name = item.Name,
+            Description = item.Description,
+            Quantity = item.Quantity,
+            UnitPrice = item.UnitPrice,
+            Location = item.Location,
+            ReorderLevel = item.ReorderLevel
+        };
+        editingId = item.Id;
+        isEditing = true;
+        showModal = true;
+    }
+
+    private async Task SaveItem()
+    {
+        try
+        {
+            if (isEditing)
+            {
+                await Http.PutAsJsonAsync($"api/inventory/{editingId}", editItem);
+            }
+            else
+            {
+                await Http.PostAsJsonAsync("api/inventory", editItem);
+            }
+            CloseModal();
+            await LoadItems();
+        }
+        catch { }
+    }
+
+    private async Task DeleteItem(int id)
+    {
+        await Http.DeleteAsync($"api/inventory/{id}");
+        await LoadItems();
+    }
+
+    private void CloseModal() => showModal = false;
+
+    private class PaginatedResult<T>
+    {
+        public IEnumerable<T> Items { get; set; } = Enumerable.Empty<T>();
+        public int TotalCount { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int TotalPages { get; set; }
+    }
+
+    private class InventoryItemDto
+    {
+        public int Id { get; set; }
+        public string SKU { get; set; } = "";
+        public string Name { get; set; } = "";
+        public string? Description { get; set; }
+        public int Quantity { get; set; }
+        public string? Location { get; set; }
+        public decimal UnitPrice { get; set; }
+        public string? CategoryName { get; set; }
+        public string? WarehouseName { get; set; }
+        public int ReorderLevel { get; set; }
+    }
+
+    private class ItemFormModel
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        public string SKU { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Name { get; set; } = "";
+
+        public string? Description { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+        public int Quantity { get; set; }
+
+        public decimal UnitPrice { get; set; }
+        public string? Location { get; set; }
+        public int ReorderLevel { get; set; } = 10;
+    }
+}
