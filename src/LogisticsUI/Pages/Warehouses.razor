@@ -1,0 +1,188 @@
+@page "/warehouses"
+@inject HttpClient Http
+
+<PageTitle>Warehouses - Logistics Inventory</PageTitle>
+
+<h3>Warehouse Management</h3>
+
+<div class="mb-3 text-end">
+    <button class="btn btn-primary" @onclick="ShowAddModal">Add Warehouse</button>
+</div>
+
+@if (warehouses == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!warehouses.Any())
+{
+    <p>No warehouses found.</p>
+}
+else
+{
+    <div class="row">
+        @foreach (var warehouse in warehouses)
+        {
+            <div class="col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between">
+                        <h5 class="mb-0">@warehouse.Name</h5>
+                        <span class="badge @(warehouse.IsActive ? "bg-success" : "bg-secondary")">
+                            @(warehouse.IsActive ? "Active" : "Inactive")
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">@(warehouse.Address ?? "No address")</p>
+                        <div class="mb-2">
+                            <strong>Capacity:</strong> @warehouse.Capacity units
+                        </div>
+                        <div class="mb-2">
+                            <strong>Items:</strong> @warehouse.ItemCount
+                        </div>
+                        <div class="mb-3">
+                            <strong>Utilization:</strong>
+                            <div class="progress">
+                                <div class="progress-bar @GetUtilizationColor(warehouse.UtilizationPercentage)"
+                                     role="progressbar"
+                                     style="width: @warehouse.UtilizationPercentage%"
+                                     aria-valuenow="@warehouse.UtilizationPercentage"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                    @warehouse.UtilizationPercentage%
+                                </div>
+                            </div>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-primary" @onclick="() => EditWarehouse(warehouse)">Edit</button>
+                            <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteWarehouse(warehouse.Id)"
+                                    disabled="@(warehouse.ItemCount > 0)">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (showModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(isEditing ? "Edit" : "Add") Warehouse</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <EditForm Model="@editWarehouse" OnValidSubmit="SaveWarehouse">
+                    <DataAnnotationsValidator />
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <InputText class="form-control" @bind-Value="editWarehouse.Name" />
+                            <ValidationMessage For="() => editWarehouse.Name" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Address</label>
+                            <InputText class="form-control" @bind-Value="editWarehouse.Address" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Capacity</label>
+                            <InputNumber class="form-control" @bind-Value="editWarehouse.Capacity" />
+                            <ValidationMessage For="() => editWarehouse.Capacity" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<WarehouseDto>? warehouses;
+    private bool showModal;
+    private bool isEditing;
+    private int editingId;
+    private WarehouseFormModel editWarehouse = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadWarehouses();
+    }
+
+    private async Task LoadWarehouses()
+    {
+        try
+        {
+            warehouses = await Http.GetFromJsonAsync<List<WarehouseDto>>("api/warehouse");
+        }
+        catch
+        {
+            warehouses = new();
+        }
+    }
+
+    private string GetUtilizationColor(double pct) => pct switch
+    {
+        >= 90 => "bg-danger",
+        >= 70 => "bg-warning",
+        _ => "bg-success"
+    };
+
+    private void ShowAddModal()
+    {
+        editWarehouse = new();
+        isEditing = false;
+        showModal = true;
+    }
+
+    private void EditWarehouse(WarehouseDto wh)
+    {
+        editWarehouse = new() { Name = wh.Name, Address = wh.Address, Capacity = wh.Capacity };
+        editingId = wh.Id;
+        isEditing = true;
+        showModal = true;
+    }
+
+    private async Task SaveWarehouse()
+    {
+        if (isEditing)
+            await Http.PutAsJsonAsync($"api/warehouse/{editingId}", editWarehouse);
+        else
+            await Http.PostAsJsonAsync("api/warehouse", editWarehouse);
+
+        CloseModal();
+        await LoadWarehouses();
+    }
+
+    private async Task DeleteWarehouse(int id)
+    {
+        await Http.DeleteAsync($"api/warehouse/{id}");
+        await LoadWarehouses();
+    }
+
+    private void CloseModal() => showModal = false;
+
+    private class WarehouseDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string? Address { get; set; }
+        public int Capacity { get; set; }
+        public bool IsActive { get; set; }
+        public int ItemCount { get; set; }
+        public double UtilizationPercentage { get; set; }
+    }
+
+    private class WarehouseFormModel
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Name { get; set; } = "";
+        public string? Address { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Range(0, int.MaxValue)]
+        public int Capacity { get; set; }
+    }
+}
