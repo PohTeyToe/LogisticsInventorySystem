@@ -1,0 +1,175 @@
+@page "/suppliers"
+@inject HttpClient Http
+
+<PageTitle>Suppliers - Logistics Inventory</PageTitle>
+
+<h3>Supplier Management</h3>
+
+<div class="mb-3 text-end">
+    <button class="btn btn-primary" @onclick="ShowAddModal">Add Supplier</button>
+</div>
+
+@if (suppliers == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!suppliers.Any())
+{
+    <p>No suppliers found.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Address</th>
+                <th>Active Orders</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var supplier in suppliers)
+            {
+                <tr>
+                    <td>@supplier.Name</td>
+                    <td>@(supplier.ContactEmail ?? "-")</td>
+                    <td>@(supplier.Phone ?? "-")</td>
+                    <td>@(supplier.Address ?? "-")</td>
+                    <td>@supplier.ActiveOrderCount</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" @onclick="() => EditSupplier(supplier)">Edit</button>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteSupplier(supplier.Id)"
+                                disabled="@(supplier.ActiveOrderCount > 0)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (showModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(isEditing ? "Edit" : "Add") Supplier</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <EditForm Model="@editSupplier" OnValidSubmit="SaveSupplier">
+                    <DataAnnotationsValidator />
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <InputText class="form-control" @bind-Value="editSupplier.Name" />
+                            <ValidationMessage For="() => editSupplier.Name" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Contact Email</label>
+                            <InputText class="form-control" @bind-Value="editSupplier.ContactEmail" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone</label>
+                            <InputText class="form-control" @bind-Value="editSupplier.Phone" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Address</label>
+                            <InputTextArea class="form-control" @bind-Value="editSupplier.Address" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CloseModal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<SupplierDto>? suppliers;
+    private bool showModal;
+    private bool isEditing;
+    private int editingId;
+    private SupplierFormModel editSupplier = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSuppliers();
+    }
+
+    private async Task LoadSuppliers()
+    {
+        try
+        {
+            suppliers = await Http.GetFromJsonAsync<List<SupplierDto>>("api/supplier");
+        }
+        catch
+        {
+            suppliers = new();
+        }
+    }
+
+    private void ShowAddModal()
+    {
+        editSupplier = new();
+        isEditing = false;
+        showModal = true;
+    }
+
+    private void EditSupplier(SupplierDto sup)
+    {
+        editSupplier = new()
+        {
+            Name = sup.Name,
+            ContactEmail = sup.ContactEmail,
+            Phone = sup.Phone,
+            Address = sup.Address
+        };
+        editingId = sup.Id;
+        isEditing = true;
+        showModal = true;
+    }
+
+    private async Task SaveSupplier()
+    {
+        if (isEditing)
+            await Http.PutAsJsonAsync($"api/supplier/{editingId}", editSupplier);
+        else
+            await Http.PostAsJsonAsync("api/supplier", editSupplier);
+
+        CloseModal();
+        await LoadSuppliers();
+    }
+
+    private async Task DeleteSupplier(int id)
+    {
+        await Http.DeleteAsync($"api/supplier/{id}");
+        await LoadSuppliers();
+    }
+
+    private void CloseModal() => showModal = false;
+
+    private class SupplierDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string? ContactEmail { get; set; }
+        public string? Phone { get; set; }
+        public string? Address { get; set; }
+        public int ActiveOrderCount { get; set; }
+    }
+
+    private class SupplierFormModel
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Name { get; set; } = "";
+        public string? ContactEmail { get; set; }
+        public string? Phone { get; set; }
+        public string? Address { get; set; }
+    }
+}

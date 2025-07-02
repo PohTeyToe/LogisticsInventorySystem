@@ -1,0 +1,171 @@
+@page "/purchase-orders"
+@inject HttpClient Http
+
+<PageTitle>Purchase Orders - Logistics Inventory</PageTitle>
+
+<h3>Purchase Orders</h3>
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <select class="form-select" @bind="statusFilter" @bind:after="LoadOrders">
+            <option value="">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Approved">Approved</option>
+            <option value="Received">Received</option>
+            <option value="Cancelled">Cancelled</option>
+        </select>
+    </div>
+</div>
+
+@if (orders == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!orders.Any())
+{
+    <p>No purchase orders found.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Order #</th>
+                <th>Supplier</th>
+                <th>Order Date</th>
+                <th>Status</th>
+                <th>Total Amount</th>
+                <th>Items</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in orders)
+            {
+                <tr>
+                    <td>PO-@order.Id.ToString("D4")</td>
+                    <td>@order.SupplierName</td>
+                    <td>@order.OrderDate.ToString("d")</td>
+                    <td>
+                        <span class="badge @GetStatusBadge(order.Status)">@order.Status</span>
+                    </td>
+                    <td>@order.TotalAmount.ToString("C")</td>
+                    <td>@order.Items.Count</td>
+                    <td>
+                        @if (order.Status == "Pending")
+                        {
+                            <button class="btn btn-sm btn-success"
+                                    @onclick="() => UpdateStatus(order.Id, \"Approved\")">Approve</button>
+                            <button class="btn btn-sm btn-danger"
+                                    @onclick="() => UpdateStatus(order.Id, \"Cancelled\")">Cancel</button>
+                        }
+                        @if (order.Status == "Approved")
+                        {
+                            <button class="btn btn-sm btn-primary"
+                                    @onclick="() => UpdateStatus(order.Id, \"Received\")">Mark Received</button>
+                        }
+                        <button class="btn btn-sm btn-outline-info" @onclick="() => ToggleDetails(order.Id)">
+                            @(expandedOrderId == order.Id ? "Hide" : "Details")
+                        </button>
+                    </td>
+                </tr>
+                @if (expandedOrderId == order.Id)
+                {
+                    <tr>
+                        <td colspan="7">
+                            <table class="table table-sm mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>SKU</th>
+                                        <th>Item</th>
+                                        <th>Quantity</th>
+                                        <th>Unit Price</th>
+                                        <th>Line Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in order.Items)
+                                    {
+                                        <tr>
+                                            <td>@item.ItemSKU</td>
+                                            <td>@item.ItemName</td>
+                                            <td>@item.Quantity</td>
+                                            <td>@item.UnitPrice.ToString("C")</td>
+                                            <td>@item.LineTotal.ToString("C")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<PurchaseOrderDto>? orders;
+    private string statusFilter = "";
+    private int? expandedOrderId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrders();
+    }
+
+    private async Task LoadOrders()
+    {
+        try
+        {
+            var url = string.IsNullOrEmpty(statusFilter)
+                ? "api/purchaseorder"
+                : $"api/purchaseorder?status={statusFilter}";
+            orders = await Http.GetFromJsonAsync<List<PurchaseOrderDto>>(url);
+        }
+        catch
+        {
+            orders = new();
+        }
+    }
+
+    private async Task UpdateStatus(int orderId, string newStatus)
+    {
+        await Http.PutAsJsonAsync($"api/purchaseorder/{orderId}/status", new { Status = newStatus });
+        await LoadOrders();
+    }
+
+    private void ToggleDetails(int orderId)
+    {
+        expandedOrderId = expandedOrderId == orderId ? null : orderId;
+    }
+
+    private string GetStatusBadge(string status) => status switch
+    {
+        "Pending" => "bg-warning text-dark",
+        "Approved" => "bg-primary",
+        "Received" => "bg-success",
+        "Cancelled" => "bg-danger",
+        _ => "bg-secondary"
+    };
+
+    private class PurchaseOrderDto
+    {
+        public int Id { get; set; }
+        public string SupplierName { get; set; } = "";
+        public DateTime OrderDate { get; set; }
+        public string Status { get; set; } = "";
+        public decimal TotalAmount { get; set; }
+        public List<PurchaseOrderItemDto> Items { get; set; } = new();
+    }
+
+    private class PurchaseOrderItemDto
+    {
+        public int Id { get; set; }
+        public string ItemName { get; set; } = "";
+        public string ItemSKU { get; set; } = "";
+        public int Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
+        public decimal LineTotal => Quantity * UnitPrice;
+    }
+}
