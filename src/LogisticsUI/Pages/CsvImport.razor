@@ -1,0 +1,185 @@
+@page "/csv-import"
+@inject HttpClient Http
+
+<PageTitle>CSV Import - Logistics Inventory</PageTitle>
+
+<h3>CSV Import</h3>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Import Inventory Items from CSV</h5>
+        <p class="text-muted">Upload a CSV file with columns: SKU, Name, Description, Quantity, Location, UnitPrice, Category, Warehouse</p>
+
+        <div class="mb-3">
+            <InputFile OnChange="OnFileSelected" class="form-control" accept=".csv" />
+        </div>
+
+        @if (selectedFile != null)
+        {
+            <p class="text-muted mb-3">Selected: @selectedFile.Name (@FormatFileSize(selectedFile.Size))</p>
+        }
+
+        <div class="btn-group">
+            <button class="btn btn-outline-primary" @onclick="ValidateFile" disabled="@(selectedFile == null || isProcessing)">
+                @(isProcessing && isValidateOnly ? "Validating..." : "Validate Only")
+            </button>
+            <button class="btn btn-primary" @onclick="ImportFile" disabled="@(selectedFile == null || isProcessing)">
+                @(isProcessing && !isValidateOnly ? "Importing..." : "Import")
+            </button>
+        </div>
+    </div>
+</div>
+
+@if (importResult != null)
+{
+    <div class="card mb-4">
+        <div class="card-header @(importResult.ErrorCount == 0 ? "bg-success text-white" : "bg-warning text-dark")">
+            <h5 class="mb-0">@(isValidateOnly ? "Validation" : "Import") Results</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <strong>Total Rows:</strong> @importResult.TotalRows
+                </div>
+                <div class="col-md-4">
+                    <strong>Successful:</strong>
+                    <span class="text-success">@importResult.SuccessCount</span>
+                </div>
+                <div class="col-md-4">
+                    <strong>Errors:</strong>
+                    <span class="text-danger">@importResult.ErrorCount</span>
+                </div>
+            </div>
+
+            @if (importResult.Errors.Any())
+            {
+                <hr />
+                <h6>Error Details</h6>
+                <table class="table table-sm table-danger">
+                    <thead>
+                        <tr>
+                            <th>Row</th>
+                            <th>Field</th>
+                            <th>Message</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var error in importResult.Errors)
+                        {
+                            <tr>
+                                <td>@error.Row</td>
+                                <td>@error.Field</td>
+                                <td>@error.Message</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+}
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">CSV Format Guide</h5>
+    </div>
+    <div class="card-body">
+        <p>The CSV file must include a header row. Required columns are <strong>SKU</strong> and <strong>Name</strong>.</p>
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Column</th>
+                    <th>Required</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>SKU</td><td>Yes</td><td>Unique stock keeping unit identifier</td></tr>
+                <tr><td>Name</td><td>Yes</td><td>Item name</td></tr>
+                <tr><td>Description</td><td>No</td><td>Item description</td></tr>
+                <tr><td>Quantity</td><td>No</td><td>Initial stock quantity (default: 0)</td></tr>
+                <tr><td>Location</td><td>No</td><td>Storage location</td></tr>
+                <tr><td>UnitPrice</td><td>No</td><td>Price per unit (default: 0)</td></tr>
+                <tr><td>Category</td><td>No</td><td>Category name</td></tr>
+                <tr><td>Warehouse</td><td>No</td><td>Warehouse name</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private IBrowserFile? selectedFile;
+    private ImportResultDto? importResult;
+    private bool isProcessing;
+    private bool isValidateOnly;
+
+    private void OnFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+        importResult = null;
+    }
+
+    private async Task ValidateFile()
+    {
+        isValidateOnly = true;
+        await ProcessFile(true);
+    }
+
+    private async Task ImportFile()
+    {
+        isValidateOnly = false;
+        await ProcessFile(false);
+    }
+
+    private async Task ProcessFile(bool validateOnly)
+    {
+        if (selectedFile == null) return;
+
+        isProcessing = true;
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            using var fileStream = selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            using var streamContent = new StreamContent(fileStream);
+            content.Add(streamContent, "file", selectedFile.Name);
+
+            var url = $"api/import/inventory?validateOnly={validateOnly}";
+            var response = await Http.PostAsync(url, content);
+            importResult = await response.Content.ReadFromJsonAsync<ImportResultDto>();
+        }
+        catch (Exception ex)
+        {
+            importResult = new ImportResultDto
+            {
+                ErrorCount = 1,
+                Errors = new() { new ImportErrorDto { Row = 0, Field = "File", Message = ex.Message } }
+            };
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
+        return $"{bytes / (1024.0 * 1024.0):F1} MB";
+    }
+
+    private class ImportResultDto
+    {
+        public int TotalRows { get; set; }
+        public int SuccessCount { get; set; }
+        public int ErrorCount { get; set; }
+        public List<ImportErrorDto> Errors { get; set; } = new();
+    }
+
+    private class ImportErrorDto
+    {
+        public int Row { get; set; }
+        public string Field { get; set; } = "";
+        public string Message { get; set; } = "";
+    }
+}
