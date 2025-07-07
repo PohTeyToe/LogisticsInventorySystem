@@ -1,0 +1,192 @@
+@page "/reports"
+@inject HttpClient Http
+
+<PageTitle>Reports - Logistics Inventory</PageTitle>
+
+<h3>Inventory Reports</h3>
+
+@if (valuationReport != null)
+{
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h6 class="card-subtitle text-muted">Total Items</h6>
+                    <h3>@valuationReport.TotalItems</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h6 class="card-subtitle text-muted">Total Quantity</h6>
+                    <h3>@valuationReport.TotalQuantity</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h6 class="card-subtitle text-muted">Total Value</h6>
+                    <h3>@valuationReport.TotalValue.ToString("C")</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Value by Category</h5>
+                </div>
+                <div class="card-body">
+                    @if (valuationReport.CategoryBreakdown.Any())
+                    {
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Items</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var cat in valuationReport.CategoryBreakdown)
+                                {
+                                    <tr>
+                                        <td>@cat.CategoryName</td>
+                                        <td>@cat.ItemCount</td>
+                                        <td>@cat.TotalValue.ToString("C")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No category data available.</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Value by Warehouse</h5>
+                </div>
+                <div class="card-body">
+                    @if (valuationReport.WarehouseBreakdown.Any())
+                    {
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Warehouse</th>
+                                    <th>Items</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var wh in valuationReport.WarehouseBreakdown)
+                                {
+                                    <tr>
+                                        <td>@wh.WarehouseName</td>
+                                        <td>@wh.ItemCount</td>
+                                        <td>@wh.TotalValue.ToString("C")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No warehouse data available.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (lowStockAlerts != null && lowStockAlerts.Any())
+{
+    <div class="card">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">Low Stock Alerts (@lowStockAlerts.Count items)</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>SKU</th>
+                        <th>Name</th>
+                        <th>Current Qty</th>
+                        <th>Reorder Level</th>
+                        <th>Warehouse</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var alert in lowStockAlerts)
+                    {
+                        <tr>
+                            <td>@alert.SKU</td>
+                            <td>@alert.Name</td>
+                            <td class="text-danger fw-bold">@alert.CurrentQuantity</td>
+                            <td>@alert.ReorderLevel</td>
+                            <td>@(alert.WarehouseName ?? "N/A")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@code {
+    private ValuationReportDto? valuationReport;
+    private List<LowStockAlertDto>? lowStockAlerts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            valuationReport = await Http.GetFromJsonAsync<ValuationReportDto>("api/report/valuation");
+            lowStockAlerts = await Http.GetFromJsonAsync<List<LowStockAlertDto>>("api/report/low-stock?threshold=15");
+        }
+        catch { }
+    }
+
+    private class ValuationReportDto
+    {
+        public int TotalItems { get; set; }
+        public int TotalQuantity { get; set; }
+        public decimal TotalValue { get; set; }
+        public List<CategoryValuationDto> CategoryBreakdown { get; set; } = new();
+        public List<WarehouseValuationDto> WarehouseBreakdown { get; set; } = new();
+    }
+
+    private class CategoryValuationDto
+    {
+        public string CategoryName { get; set; } = "";
+        public int ItemCount { get; set; }
+        public decimal TotalValue { get; set; }
+    }
+
+    private class WarehouseValuationDto
+    {
+        public string WarehouseName { get; set; } = "";
+        public int ItemCount { get; set; }
+        public decimal TotalValue { get; set; }
+    }
+
+    private class LowStockAlertDto
+    {
+        public int ItemId { get; set; }
+        public string SKU { get; set; } = "";
+        public string Name { get; set; } = "";
+        public int CurrentQuantity { get; set; }
+        public int ReorderLevel { get; set; }
+        public string? WarehouseName { get; set; }
+    }
+}
