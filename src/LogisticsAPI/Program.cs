@@ -26,6 +26,7 @@ builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 builder.Services.AddScoped<ICsvImportService, CsvImportService>();
 builder.Services.AddScoped<IReportingService, ReportingService>();
+builder.Services.AddScoped<IFinancialCalculationService, FinancialCalculationService>();
 
 builder.Services.AddControllers()
     .AddXmlDataContractSerializerFormatters();

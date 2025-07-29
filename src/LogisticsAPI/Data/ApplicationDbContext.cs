@@ -24,6 +24,9 @@ namespace LogisticsAPI.Data
         public DbSet<PurchaseOrderItem> PurchaseOrderItems { get; set; }
         public DbSet<StockMovement> StockMovements { get; set; }
         public DbSet<Tenant> Tenants { get; set; }
+        public DbSet<Property> Properties { get; set; }
+        public DbSet<PropertyOwner> PropertyOwners { get; set; }
+        public DbSet<Reservation> Reservations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
