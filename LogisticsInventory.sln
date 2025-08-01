@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -8,6 +8,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogisticsAPI", "src\LogisticsAPI\LogisticsAPI.csproj", "{583FD385-74B3-4E8E-8371-97AFC738196C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogisticsUI", "src\LogisticsUI\LogisticsUI.csproj", "{3D84D237-7191-4A8B-B0D7-E7984F0953D6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogisticsAPI.Tests", "tests\LogisticsAPI.Tests\LogisticsAPI.Tests.csproj", "{B2C3D4E5-F6A7-8901-BCDE-F12345678901}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,9 +30,14 @@ Global
 		{3D84D237-7191-4A8B-B0D7-E7984F0953D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3D84D237-7191-4A8B-B0D7-E7984F0953D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3D84D237-7191-4A8B-B0D7-E7984F0953D6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F12345678901}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F12345678901}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F12345678901}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B2C3D4E5-F6A7-8901-BCDE-F12345678901}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{583FD385-74B3-4E8E-8371-97AFC738196C} = {F3DCAF99-36E1-4C69-9E48-E29B1C11D93A}
 		{3D84D237-7191-4A8B-B0D7-E7984F0953D6} = {F3DCAF99-36E1-4C69-9E48-E29B1C11D93A}
+		{B2C3D4E5-F6A7-8901-BCDE-F12345678901} = {A1B2C3D4-E5F6-7890-ABCD-EF1234567890}
 	EndGlobalSection
 EndGlobal
