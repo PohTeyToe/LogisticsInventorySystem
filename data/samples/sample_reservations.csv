@@ -1,0 +1,11 @@
+Confirmation Code,Guest Name,Check-In,Check-Out,Nights,Listing,Nightly Rate,Cleaning Fee,Service Fee,Total Payout,Booking Source
+RES001,John Smith,2025-01-15,2025-01-18,3,Lakeside Cottage,150.00,75.00,45.00,525.00,Airbnb
+RES002,Jane Doe,2025-01-20,2025-01-25,5,Mountain View Suite,200.00,100.00,60.00,1100.00,VRBO
+RES003,Bob Wilson,2025-02-01,2025-02-03,2,Downtown Apartment,175.00,50.00,35.00,400.00,Airbnb
+RES004,Alice Brown,2025-02-10,2025-02-15,5,Lakeside Cottage,160.00,75.00,48.00,873.00,Direct
+RES005,Charlie Davis,2025-02-20,2025-02-22,2,Mountain View Suite,210.00,100.00,42.00,562.00,VRBO
+RES006,Diana Miller,2025-03-01,2025-03-05,4,Downtown Apartment,180.00,50.00,54.00,774.00,Airbnb
+RES007,Edward Johnson,2025-03-10,2025-03-12,2,Lakeside Cottage,155.00,75.00,31.00,396.00,Direct
+RES008,Fiona Clark,2025-03-15,2025-03-20,5,Mountain View Suite,195.00,100.00,58.50,1033.50,Airbnb
+RES009,George White,2025-03-25,2025-03-28,3,Downtown Apartment,170.00,50.00,51.00,561.00,VRBO
+RES010,Hannah Lee,2025-04-01,2025-04-04,3,Lakeside Cottage,165.00,75.00,49.50,569.50,Airbnb
