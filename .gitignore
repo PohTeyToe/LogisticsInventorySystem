@@ -483,3 +483,11 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 src/PropertyManagementUI/
+
+# Property Management UI (separate project)
+src/PropertyManagementUI/
+
+# SQLite databases
+*.db
+*.db-shm
+*.db-wal
