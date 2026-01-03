@@ -61,6 +61,7 @@ namespace LogisticsAPI.Controllers
             return Ok(item);
         }
 
+        // TODO: add bulk delete endpoint
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteItem(int id)
         {

@@ -13,6 +13,7 @@ namespace LogisticsAPI.Middleware
 
         public async Task InvokeAsync(HttpContext context)
         {
+            // FIXME: tenant resolution should use JWT claims in production
             var tenantIdHeader = context.Request.Headers["X-Tenant-Id"].FirstOrDefault();
             var tenantId = 1; // Default tenant
 
