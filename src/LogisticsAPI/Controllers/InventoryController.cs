@@ -22,6 +22,12 @@ namespace LogisticsAPI.Controllers
             [FromQuery] int pageSize = 20,
             [FromQuery] string? search = null)
         {
+            if (page < 1)
+                return BadRequest(new { error = "Page must be greater than or equal to 1.", field = "page" });
+
+            if (pageSize < 1 || pageSize > 100)
+                return BadRequest(new { error = "PageSize must be between 1 and 100.", field = "pageSize" });
+
             var result = await _inventoryService.GetItemsAsync(page, pageSize, search);
             return Ok(result);
         }
@@ -76,6 +82,9 @@ namespace LogisticsAPI.Controllers
         public async Task<ActionResult<IEnumerable<InventoryItemResponse>>> GetLowStockItems(
             [FromQuery] int threshold = 10)
         {
+            if (threshold < 0)
+                return BadRequest(new { error = "Threshold cannot be negative.", field = "threshold" });
+
             var items = await _inventoryService.GetLowStockAlertsAsync(threshold);
             return Ok(items);
         }
