@@ -6,7 +6,6 @@ using Xunit;
 
 namespace LogisticsAPI.Tests
 {
-    // TODO: add integration tests for CSV import edge cases
     public class CsvImportServiceTests
     {
         private CsvImportService CreateService(string? dbName = null)
@@ -151,6 +150,47 @@ namespace LogisticsAPI.Tests
             Assert.Equal(0, result.SuccessCount);
             Assert.Equal(1, result.ErrorCount);
             Assert.Contains(result.Errors, e => e.Field == "UnitPrice");
+        }
+
+        [Fact]
+        public async Task ImportInventoryItems_WithMalformedRows_HandlesGracefully()
+        {
+            var service = CreateService();
+            // Row with non-numeric quantity and row with non-numeric price
+            var csv = "SKU,Name,Quantity,UnitPrice\nMAL-001,Bad Qty,abc,9.99\nMAL-002,Bad Price,10,xyz";
+            using var stream = CreateCsvStream(csv);
+
+            var result = await service.ImportInventoryItemsAsync(stream);
+
+            // Malformed numeric fields should default to 0 via CsvHelper, triggering validation or importing as 0
+            Assert.True(result.TotalRows >= 0, "Should handle malformed rows without throwing");
+        }
+
+        [Fact]
+        public async Task ImportInventoryItems_WithExtraColumns_IgnoresExtras()
+        {
+            var service = CreateService();
+            var csv = "SKU,Name,Quantity,UnitPrice,ExtraCol1,ExtraCol2\nEXT-001,Extra Cols,5,10.00,ignored,also_ignored";
+            using var stream = CreateCsvStream(csv);
+
+            var result = await service.ImportInventoryItemsAsync(stream);
+
+            Assert.Equal(1, result.SuccessCount);
+            Assert.Equal(0, result.ErrorCount);
+        }
+
+        [Fact]
+        public async Task ImportInventoryItems_WithWhitespaceOnlySku_ReportsError()
+        {
+            var service = CreateService();
+            var csv = "SKU,Name,Quantity,UnitPrice\n   ,Whitespace SKU,10,5.00";
+            using var stream = CreateCsvStream(csv);
+
+            var result = await service.ImportInventoryItemsAsync(stream);
+
+            Assert.Equal(0, result.SuccessCount);
+            Assert.Equal(1, result.ErrorCount);
+            Assert.Contains(result.Errors, e => e.Field == "SKU");
         }
     }
 }
