@@ -107,6 +107,18 @@ Development uses SQLite by default. For SQL Server, update `appsettings.json`:
 - **Data Transfer Objects**: Separate request/response models for API contracts
 - **Multi-Tenant Architecture**: Global query filters with automatic tenant ID assignment
 
+## Architecture Decisions
+
+- **Blazor Server over React/Angular** — Full-stack C# eliminates JavaScript context switching and allows shared domain models between server and UI. Blazor's component model with SignalR provides real-time updates for inventory changes without building a separate WebSocket layer.
+
+- **Entity Framework Core over Dapper** — EF Core's migrations handle schema evolution as the inventory model grew (adding CSV import, audit fields, tenant isolation). Navigation properties simplify queries across related entities (items → categories → suppliers). LINQ provides type-safe queries that catch errors at compile time.
+
+- **Multi-tenant architecture** — Single deployment serves multiple warehouses or organizations. Tenant isolation via `TenantId` column with global query filters prevents data leaks between tenants. Shared infrastructure reduces operational overhead compared to per-tenant databases.
+
+- **CSV import with validation pipeline** — Bulk data entry is the primary workflow for warehouse inventory. Two-pass validation (parse → validate → commit) prevents partial imports that would leave the database in an inconsistent state. Detailed error reporting per row helps users fix data issues before re-importing.
+
+- **ASP.NET Core Web API + Blazor hybrid** — API-first design allows future mobile/third-party integrations. Blazor Server pages consume the same API endpoints, ensuring the API is battle-tested through daily use. Swagger documentation auto-generated from controller attributes.
+
 ## Testing
 
 ```bash
