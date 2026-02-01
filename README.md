@@ -133,6 +133,22 @@ Test coverage includes:
 - Multi-tenant data isolation
 - Financial calculation accuracy
 
+## Known Issues
+
+- CSV import limited to ~10,000 rows per batch before timeout; larger files need chunking
+- Multi-tenant query filter adds overhead to every database query, even single-tenant deployments
+- Blazor Server requires persistent SignalR connection — poor experience on unreliable networks
+- No barcode/QR code scanning integration for physical inventory counts
+- Audit trail stores changes but doesn't support point-in-time inventory snapshots
+
+## Roadmap
+
+- [ ] Barcode scanning integration via mobile camera (Blazor WASM PWA)
+- [ ] Real-time inventory sync across multiple warehouse locations
+- [ ] Low-stock alerts with configurable thresholds per item
+- [ ] Bulk export to Excel/CSV with custom column selection
+- [ ] Integration with shipping providers (Canada Post, UPS) for order fulfillment
+
 ## Deployment
 
 See [AZURE_DEPLOYMENT.md](AZURE_DEPLOYMENT.md) for detailed Azure deployment instructions.
