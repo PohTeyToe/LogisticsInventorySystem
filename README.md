@@ -61,30 +61,41 @@ All endpoints support JSON and XML content negotiation.
 | Import | `POST /api/import/inventory` |
 | Reports | `GET /api/report/valuation`, `GET /api/report/low-stock`, `GET /api/report/total-value` |
 
-## Getting Started
+## Quick Start
+
+```bash
+# 1. Clone and restore
+git clone https://github.com/yourusername/LogisticsInventorySystem.git
+cd LogisticsInventorySystem
+dotnet restore
+
+# 2. Start the API (runs on https://localhost:7001)
+dotnet run --project src/LogisticsAPI
+
+# 3. In a separate terminal, start the Blazor frontend (runs on https://localhost:7002)
+dotnet run --project src/LogisticsUI
+
+# 4. Open https://localhost:7002 in your browser
+```
+
+Try the API directly with curl:
+
+```bash
+# List inventory items
+curl https://localhost:7001/api/inventory
+
+# Check low stock (threshold defaults to 10)
+curl https://localhost:7001/api/inventory/low-stock?threshold=5
+
+# Import items from CSV
+curl -X POST https://localhost:7001/api/import/inventory \
+  -F "file=@data/samples/inventory.csv"
+```
 
 ### Prerequisites
 
 - .NET 8 SDK
 - Node.js (optional, for frontend tooling)
-
-### Run Locally
-
-```bash
-# Clone and restore
-git clone https://github.com/yourusername/LogisticsInventorySystem.git
-cd LogisticsInventorySystem
-dotnet restore
-
-# Run the API
-dotnet run --project src/LogisticsAPI
-
-# Run the Blazor frontend (separate terminal)
-dotnet run --project src/LogisticsUI
-
-# Run tests
-dotnet test
-```
 
 ### Configuration
 
@@ -97,6 +108,16 @@ Development uses SQLite by default. For SQL Server, update `appsettings.json`:
   }
 }
 ```
+
+## Common Issues
+
+| Problem | Solution |
+|-|-|
+| `HTTPS certificate error` | Run `dotnet dev-certs https --trust` to trust the dev certificate |
+| `Port already in use` | Change the port in `Properties/launchSettings.json` or stop the other process |
+| `SQLite database locked` | Ensure only one instance of the API is running at a time |
+| `CSV import returns 400` | Verify the file has a `.csv` extension and includes header row with `SKU,Name,Quantity,UnitPrice` |
+| `EF Core migration errors` | Delete `logistics.db` and restart — the database is auto-created on first run |
 
 ## Design Patterns
 
