@@ -1,16 +1,19 @@
-.PHONY: build run test migrate clean docker-up docker-down
+.PHONY: build run run-ui test migrate clean docker-up docker-down
 
 build:
 	dotnet build
 
 run:
-	dotnet run --project src/LogisticsInventory.Web
+	dotnet run --project src/LogisticsAPI
+
+run-ui:
+	dotnet run --project src/LogisticsUI
 
 test:
-	dotnet test
+	dotnet test tests/LogisticsAPI.Tests
 
 migrate:
-	dotnet ef database update --project src/LogisticsInventory.Web
+	dotnet ef database update --project src/LogisticsAPI
 
 clean:
 	dotnet clean
