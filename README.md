@@ -1,6 +1,6 @@
 # Logistics Inventory Management System
 
-A full-stack ERP-style inventory management system built with .NET Core Web API and Blazor Server, featuring multi-tenant architecture, CSV import capabilities, and Azure deployment support.
+A multi-tenant warehouse inventory management system for tracking items, categories, suppliers, purchase orders, and stock movements with CSV bulk import. Built to explore enterprise patterns -- multi-tenancy with tenant-isolated data, bulk import with row-level validation, and ERP-style CRUD -- using a logistics/warehouse domain.
 
 ## Architecture
 
@@ -65,7 +65,7 @@ All endpoints support JSON and XML content negotiation.
 
 ```bash
 # 1. Clone and restore
-git clone https://github.com/yourusername/LogisticsInventorySystem.git
+git clone https://github.com/PohTeyToe/LogisticsInventorySystem.git
 cd LogisticsInventorySystem
 dotnet restore
 
@@ -172,4 +172,24 @@ Test coverage includes:
 
 ## Deployment
 
-See [AZURE_DEPLOYMENT.md](AZURE_DEPLOYMENT.md) for detailed Azure deployment instructions.
+### Docker
+
+```bash
+# Run API + Blazor UI locally with Docker Compose
+docker-compose up -d --build
+
+# API available at http://localhost:7001
+# UI  available at http://localhost:7002
+```
+
+### Render (Live)
+
+**Live API:** [https://logistics-inventory-api.onrender.com/swagger](https://logistics-inventory-api.onrender.com/swagger)
+
+The API is deployed on Render's free tier as a Docker web service. Swagger UI is available at `/swagger` for interactive testing. The Blazor UI is designed to run locally (`dotnet run --project src/LogisticsUI`).
+
+> Note: Free-tier services spin down after inactivity. The first request may take 30-60 seconds while the service wakes up.
+
+### Azure
+
+See [AZURE_DEPLOYMENT.md](AZURE_DEPLOYMENT.md) for detailed Azure deployment instructions using ARM templates.
