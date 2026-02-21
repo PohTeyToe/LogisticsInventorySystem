@@ -1,0 +1,15 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost;Database=LogisticsInventory;User Id=sa;Password=YourPassword123;TrustServerCertificate=true"
+  },
+  "Jwt": {
+    "Secret": "your-development-secret-key-min-32-chars-long",
+    "Issuer": "LogisticsInventory",
+    "Audience": "LogisticsInventory"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information"
+    }
+  }
+}
