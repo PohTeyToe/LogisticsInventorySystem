@@ -27,6 +27,8 @@ namespace LogisticsAPI.Models
         [Column(TypeName = "decimal(5,2)")]
         public decimal ManagementFeePercentage { get; set; } = 20.0m;
 
+        public int TenantId { get; set; }
+
         public int? PropertyOwnerId { get; set; }
 
         [ForeignKey("PropertyOwnerId")]

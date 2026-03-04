@@ -116,6 +116,27 @@ namespace LogisticsAPI.Data
 
                 entity.HasQueryFilter(e => e.TenantId == _tenantId);
             });
+
+            // Property configuration
+            modelBuilder.Entity<Property>(entity =>
+            {
+                entity.HasIndex(e => e.TenantId);
+                entity.HasQueryFilter(e => e.TenantId == _tenantId);
+            });
+
+            // PropertyOwner configuration
+            modelBuilder.Entity<PropertyOwner>(entity =>
+            {
+                entity.HasIndex(e => e.TenantId);
+                entity.HasQueryFilter(e => e.TenantId == _tenantId);
+            });
+
+            // Reservation configuration
+            modelBuilder.Entity<Reservation>(entity =>
+            {
+                entity.HasIndex(e => e.TenantId);
+                entity.HasQueryFilter(e => e.TenantId == _tenantId);
+            });
         }
 
         public override int SaveChanges()

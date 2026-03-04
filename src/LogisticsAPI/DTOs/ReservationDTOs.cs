@@ -1,54 +1,69 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.Serialization;
 
-namespace LogisticsAPI.Models
+namespace LogisticsAPI.DTOs
 {
-    public class Reservation
+    [DataContract]
+    public class ReservationResponse
     {
+        [DataMember]
         public int Id { get; set; }
 
-        [Required]
-        [StringLength(50)]
+        [DataMember]
         public string ConfirmationCode { get; set; } = string.Empty;
 
-        [StringLength(200)]
+        [DataMember]
         public string? GuestName { get; set; }
 
+        [DataMember]
         public DateTime CheckIn { get; set; }
 
+        [DataMember]
         public DateTime CheckOut { get; set; }
 
+        [DataMember]
         public int Nights { get; set; }
 
+        [DataMember]
         public int? PropertyId { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")]
+        [DataMember]
+        public string? PropertyName { get; set; }
+
+        [DataMember]
         public decimal NightlyRate { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")]
+        [DataMember]
         public decimal AccommodationRevenue { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")]
+        [DataMember]
         public decimal CleaningFee { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")]
+        [DataMember]
         public decimal ServiceFee { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")]
+        [DataMember]
         public decimal TotalPayout { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")]
+        [DataMember]
         public decimal ManagementFeeAmount { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")]
+        [DataMember]
         public decimal OwnerNetEarnings { get; set; }
 
-        [StringLength(50)]
+        [DataMember]
         public string? BookingSource { get; set; }
 
+        [DataMember]
         public int TenantId { get; set; }
+    }
 
-        [ForeignKey("PropertyId")]
-        public Property? Property { get; set; }
+    [DataContract]
+    public class ReservationUploadResult
+    {
+        [DataMember]
+        public int Imported { get; set; }
+
+        [DataMember]
+        public List<string> Errors { get; set; } = new();
     }
 }

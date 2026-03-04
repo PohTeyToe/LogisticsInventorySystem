@@ -1,7 +1,6 @@
-using LogisticsAPI.Data;
-using LogisticsAPI.Models;
+using LogisticsAPI.DTOs;
+using LogisticsAPI.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace LogisticsAPI.Controllers
 {
@@ -10,83 +9,71 @@ namespace LogisticsAPI.Controllers
     [Produces("application/json", "application/xml")]
     public class PropertiesController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IPropertyService _propertyService;
 
-        public PropertiesController(ApplicationDbContext context)
+        public PropertiesController(IPropertyService propertyService)
         {
-            _context = context;
+            _propertyService = propertyService;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Property>>> GetProperties()
+        public async Task<ActionResult<IEnumerable<PropertyResponse>>> GetProperties()
         {
-            return Ok(await _context.Properties
-                .Include(p => p.Owner)
-                .ToListAsync());
+            var properties = await _propertyService.GetAllPropertiesAsync();
+            return Ok(properties);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Property>> GetProperty(int id)
+        public async Task<ActionResult<PropertyResponse>> GetProperty(int id)
         {
-            var property = await _context.Properties
-                .Include(p => p.Owner)
-                .Include(p => p.Reservations)
-                .FirstOrDefaultAsync(p => p.Id == id);
-
+            var property = await _propertyService.GetPropertyByIdAsync(id);
             if (property == null) return NotFound();
             return Ok(property);
         }
 
         [HttpPost]
-        public async Task<ActionResult<Property>> CreateProperty([FromBody] Property property)
+        public async Task<ActionResult<PropertyResponse>> CreateProperty(
+            [FromBody] CreatePropertyRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            _context.Properties.Add(property);
-            await _context.SaveChangesAsync();
-
+            var property = await _propertyService.CreatePropertyAsync(request);
             return CreatedAtAction(nameof(GetProperty), new { id = property.Id }, property);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateProperty(int id, [FromBody] Property property)
+        public async Task<ActionResult<PropertyResponse>> UpdateProperty(
+            int id, [FromBody] UpdatePropertyRequest request)
         {
-            if (id != property.Id) return BadRequest();
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            _context.Entry(property).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            var property = await _propertyService.UpdatePropertyAsync(id, request);
+            if (property == null) return NotFound();
+            return Ok(property);
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProperty(int id)
         {
-            var property = await _context.Properties.FindAsync(id);
-            if (property == null) return NotFound();
-
-            _context.Properties.Remove(property);
-            await _context.SaveChangesAsync();
-
+            var result = await _propertyService.DeletePropertyAsync(id);
+            if (!result) return NotFound();
             return NoContent();
         }
 
         [HttpGet("owners")]
-        public async Task<ActionResult<IEnumerable<PropertyOwner>>> GetOwners()
+        public async Task<ActionResult<IEnumerable<PropertyOwnerResponse>>> GetOwners()
         {
-            return Ok(await _context.PropertyOwners
-                .Include(o => o.Properties)
-                .ToListAsync());
+            var owners = await _propertyService.GetAllOwnersAsync();
+            return Ok(owners);
         }
 
         [HttpPost("owners")]
-        public async Task<ActionResult<PropertyOwner>> CreateOwner([FromBody] PropertyOwner owner)
+        public async Task<ActionResult<PropertyOwnerResponse>> CreateOwner(
+            [FromBody] CreatePropertyOwnerRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            _context.PropertyOwners.Add(owner);
-            await _context.SaveChangesAsync();
-
+            var owner = await _propertyService.CreateOwnerAsync(request);
             return CreatedAtAction(nameof(GetOwners), new { id = owner.Id }, owner);
         }
     }

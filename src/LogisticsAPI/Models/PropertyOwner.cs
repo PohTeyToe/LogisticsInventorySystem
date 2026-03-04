@@ -23,6 +23,8 @@ namespace LogisticsAPI.Models
         [StringLength(200)]
         public string? CompanyName { get; set; }
 
+        public int TenantId { get; set; }
+
         public ICollection<Property> Properties { get; set; } = new List<Property>();
     }
 }
