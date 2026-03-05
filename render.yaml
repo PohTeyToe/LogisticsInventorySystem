@@ -6,5 +6,5 @@ services:
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
-    healthCheckPath: /swagger
+    healthCheckPath: /api/health
     plan: free
