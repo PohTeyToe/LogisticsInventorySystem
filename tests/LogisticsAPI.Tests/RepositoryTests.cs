@@ -1,3 +1,4 @@
+using LogisticsAPI.Models;
 using LogisticsAPI.Repositories;
 using Xunit;
 

@@ -1,3 +1,5 @@
+using LogisticsAPI.Models;
+
 namespace LogisticsAPI.Repositories
 {
     public interface IInventoryRepository : IRepository<InventoryItem>

@@ -3,6 +3,7 @@ using CsvHelper;
 using CsvHelper.Configuration;
 using LogisticsAPI.Data;
 using LogisticsAPI.DTOs;
+using LogisticsAPI.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace LogisticsAPI.Services

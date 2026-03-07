@@ -1,4 +1,5 @@
 using LogisticsAPI.DTOs;
+using LogisticsAPI.Models;
 using LogisticsAPI.Repositories;
 
 namespace LogisticsAPI.Services

@@ -1,4 +1,5 @@
 using LogisticsAPI.Data;
+using LogisticsAPI.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace LogisticsAPI.Repositories
