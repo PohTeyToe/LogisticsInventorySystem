@@ -1,8 +1,6 @@
-using LogisticsAPI.Data;
 using LogisticsAPI.DTOs;
-using LogisticsAPI.Models;
+using LogisticsAPI.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace LogisticsAPI.Controllers
 {
@@ -11,47 +9,28 @@ namespace LogisticsAPI.Controllers
     [Produces("application/json", "application/xml")]
     public class CategoryController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ICategoryService _categoryService;
 
-        public CategoryController(ApplicationDbContext context)
+        public CategoryController(ICategoryService categoryService)
         {
-            _context = context;
+            _categoryService = categoryService;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CategoryResponse>>> GetCategories()
         {
-            var categories = await _context.Categories
-                .Include(c => c.InventoryItems)
-                .Select(c => new CategoryResponse
-                {
-                    Id = c.Id,
-                    Name = c.Name,
-                    Description = c.Description,
-                    ItemCount = c.InventoryItems.Count
-                })
-                .ToListAsync();
-
+            var categories = await _categoryService.GetAllCategoriesAsync();
             return Ok(categories);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<CategoryResponse>> GetCategory(int id)
         {
-            var category = await _context.Categories
-                .Include(c => c.InventoryItems)
-                .FirstOrDefaultAsync(c => c.Id == id);
-
+            var category = await _categoryService.GetCategoryByIdAsync(id);
             if (category == null)
                 return NotFound();
 
-            return Ok(new CategoryResponse
-            {
-                Id = category.Id,
-                Name = category.Name,
-                Description = category.Description,
-                ItemCount = category.InventoryItems.Count
-            });
+            return Ok(category);
         }
 
         [HttpPost]
@@ -61,63 +40,36 @@ namespace LogisticsAPI.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var category = new Category
-            {
-                Name = request.Name,
-                Description = request.Description
-            };
-
-            _context.Categories.Add(category);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetCategory), new { id = category.Id },
-                new CategoryResponse
-                {
-                    Id = category.Id,
-                    Name = category.Name,
-                    Description = category.Description,
-                    ItemCount = 0
-                });
+            var category = await _categoryService.CreateCategoryAsync(request);
+            return CreatedAtAction(nameof(GetCategory), new { id = category.Id }, category);
         }
 
         [HttpPut("{id}")]
         public async Task<ActionResult<CategoryResponse>> UpdateCategory(
             int id, [FromBody] CreateCategoryRequest request)
         {
-            var category = await _context.Categories.FindAsync(id);
+            var category = await _categoryService.UpdateCategoryAsync(id, request);
             if (category == null)
                 return NotFound();
 
-            category.Name = request.Name;
-            category.Description = request.Description;
-            await _context.SaveChangesAsync();
-
-            return Ok(new CategoryResponse
-            {
-                Id = category.Id,
-                Name = category.Name,
-                Description = category.Description,
-                ItemCount = await _context.InventoryItems.CountAsync(i => i.CategoryId == id)
-            });
+            return Ok(category);
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
-            var category = await _context.Categories
-                .Include(c => c.InventoryItems)
-                .FirstOrDefaultAsync(c => c.Id == id);
+            try
+            {
+                var deleted = await _categoryService.DeleteCategoryAsync(id);
+                if (!deleted)
+                    return NotFound();
 
-            if (category == null)
-                return NotFound();
-
-            if (category.InventoryItems.Any())
-                return BadRequest("Cannot delete category with associated inventory items.");
-
-            _context.Categories.Remove(category);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

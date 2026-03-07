@@ -51,15 +51,21 @@ builder.Services.AddScoped<IReportingService, ReportingService>();
 builder.Services.AddScoped<IFinancialCalculationService, FinancialCalculationService>();
 builder.Services.AddScoped<IPropertyService, PropertyService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IWarehouseService, WarehouseService>();
+builder.Services.AddScoped<ISupplierService, SupplierService>();
+builder.Services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();
+builder.Services.AddScoped<IStockMovementService, StockMovementService>();
 
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
         policy.WithOrigins(
-                  "http://localhost:5000",
-                  "https://localhost:5001",
-                  "http://localhost:5173",
+                  "http://localhost:5081",
+                  "https://localhost:7146",
+                  "http://localhost:7001",
+                  "http://localhost:7002",
                   "https://logistics-inventory-api.onrender.com")
               .AllowAnyMethod()
               .AllowAnyHeader();
