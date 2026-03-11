@@ -12,7 +12,7 @@
 2. Copy `appsettings.Development.json.example` to `appsettings.Development.json`
 3. Update the connection string for your local database
 4. Run migrations: `dotnet ef database update`
-5. Start the application: `dotnet run --project src/LogisticsInventory.Web`
+5. Start the application: `dotnet run --project src/LogisticsAPI`
 6. Navigate to `https://localhost:5001`
 
 ## Running Tests
