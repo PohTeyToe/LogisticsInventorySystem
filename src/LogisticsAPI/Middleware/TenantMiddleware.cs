@@ -25,8 +25,8 @@ namespace LogisticsAPI.Middleware
 
             if (string.IsNullOrEmpty(tenantIdHeader))
             {
-                // No tenant header — default to 0 (no tenant, returns empty)
-                tenantId = 0;
+                // No tenant header — default to 1 (primary tenant)
+                tenantId = 1;
             }
             else if (int.TryParse(tenantIdHeader, out var parsedId))
             {

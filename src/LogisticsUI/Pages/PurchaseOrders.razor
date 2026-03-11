@@ -55,14 +55,14 @@ else
                         @if (order.Status == "Pending")
                         {
                             <button class="btn btn-sm btn-success"
-                                    @onclick="() => UpdateStatus(order.Id, \"Approved\")">Approve</button>
+                                    @onclick="@(() => UpdateStatus(order.Id, "Approved"))">Approve</button>
                             <button class="btn btn-sm btn-danger"
-                                    @onclick="() => UpdateStatus(order.Id, \"Cancelled\")">Cancel</button>
+                                    @onclick="@(() => UpdateStatus(order.Id, "Cancelled"))">Cancel</button>
                         }
                         @if (order.Status == "Approved")
                         {
                             <button class="btn btn-sm btn-primary"
-                                    @onclick="() => UpdateStatus(order.Id, \"Received\")">Mark Received</button>
+                                    @onclick="@(() => UpdateStatus(order.Id, "Received"))">Mark Received</button>
                         }
                         <button class="btn btn-sm btn-outline-info" @onclick="() => ToggleDetails(order.Id)">
                             @(expandedOrderId == order.Id ? "Hide" : "Details")

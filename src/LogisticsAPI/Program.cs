@@ -1,4 +1,5 @@
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using LogisticsAPI.Data;
@@ -66,7 +67,11 @@ builder.Services.AddCors(options =>
                   "https://localhost:7146",
                   "http://localhost:7001",
                   "http://localhost:7002",
-                  "https://logistics-inventory-api.onrender.com")
+                  "https://logistics-inventory-api.onrender.com",
+                  "https://logistics-inventory-api.azurewebsites.net",
+                  "https://logistics-inventory-ui.azurewebsites.net",
+                  "https://logistics-inventory-api-abdallah.azurewebsites.net",
+                  "https://logistics-inventory-ui-abdallah.azurewebsites.net")
               .AllowAnyMethod()
               .AllowAnyHeader();
     });
