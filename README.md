@@ -21,7 +21,7 @@ LogisticsInventory/
 │       └── Shared/           # Layout and navigation
 ├── tests/
 │   └── LogisticsAPI.Tests/   # xUnit tests (56 test methods)
-├── azure/                    # ARM templates (originally designed for Azure)
+├── azure/                    # ARM templates for Azure App Service + SQL
 ├── data/samples/             # Sample CSV files
 └── .github/workflows/        # CI/CD pipeline
 ```
@@ -41,10 +41,10 @@ LogisticsInventory/
 
 - **Backend**: .NET 8, ASP.NET Core Web API, Entity Framework Core 9
 - **Frontend**: Blazor Server with Bootstrap 5
-- **Database**: SQLite (development), SQL Server (production)
+- **Database**: SQLite (development), Azure SQL Database (production)
 - **Testing**: xUnit, Moq, EF Core InMemory provider
 - **CI/CD**: GitHub Actions
-- **Deployment**: Render (Docker). Originally designed for Azure App Service; ARM templates retained in `azure/` for reference
+- **Deployment**: Azure App Service (API + Blazor UI) with Azure SQL Database. Also available on Render (Docker). ARM templates in `azure/` for infrastructure-as-code
 
 ## API Endpoints
 
@@ -174,7 +174,31 @@ Test coverage includes:
 
 ## Deployment
 
-### Docker
+### Azure (Primary)
+
+| Service | URL |
+|-|-|
+| API (Swagger) | https://logistics-inventory-api-abdallah.azurewebsites.net/swagger |
+| Blazor UI | https://logistics-inventory-ui-abdallah.azurewebsites.net/ |
+| Health Check | https://logistics-inventory-api-abdallah.azurewebsites.net/api/health |
+
+Deployed on Azure App Service (F1 Free tier) with Azure SQL Database (Basic tier) in Canada Central. Infrastructure is defined as ARM templates in the `azure/` directory. See [AZURE_DEPLOYMENT.md](AZURE_DEPLOYMENT.md) for full deployment instructions and redeployment commands.
+
+**Azure Resources:**
+- Resource Group: `logistics-inventory-rg` (Canada Central)
+- App Service Plan: F1 Free tier, shared between API and UI
+- App Services: `logistics-inventory-api-abdallah`, `logistics-inventory-ui-abdallah`
+- Database: Azure SQL Server + Database (Basic tier)
+
+### Render (Secondary)
+
+**Live API:** [https://logistics-inventory-api.onrender.com/swagger](https://logistics-inventory-api.onrender.com/swagger)
+
+Also deployed on Render's free tier as a Docker web service with SQLite (in-container). Swagger UI available at `/swagger`.
+
+> Note: Render free-tier services spin down after inactivity. The first request may take 30-60 seconds while the service wakes up.
+
+### Docker (Local)
 
 ```bash
 # Run API + Blazor UI locally with Docker Compose
@@ -183,15 +207,3 @@ docker-compose up -d --build
 # API available at http://localhost:7001
 # UI  available at http://localhost:7002
 ```
-
-### Render (Live)
-
-**Live API:** [https://logistics-inventory-api.onrender.com/swagger](https://logistics-inventory-api.onrender.com/swagger)
-
-The API is deployed on Render's free tier as a Docker web service. Swagger UI is available at `/swagger` for interactive testing. The Blazor UI is designed to run locally (`dotnet run --project src/LogisticsUI`).
-
-> Note: Free-tier services spin down after inactivity. The first request may take 30-60 seconds while the service wakes up.
-
-### Azure
-
-See [AZURE_DEPLOYMENT.md](AZURE_DEPLOYMENT.md) for detailed Azure deployment instructions using ARM templates.
