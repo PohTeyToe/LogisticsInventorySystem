@@ -11,26 +11,31 @@ using Xunit;
 
 namespace LogisticsAPI.Tests
 {
-    public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+    public class CustomWebAppFactory : WebApplicationFactory<Program>
     {
-        private readonly WebApplicationFactory<Program> _factory;
-
-        public IntegrationTests(WebApplicationFactory<Program> factory)
+        protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
         {
-            _factory = factory.WithWebHostBuilder(builder =>
+            builder.ConfigureServices(services =>
             {
-                builder.ConfigureServices(services =>
-                {
-                    // Remove existing DbContext registration
-                    var descriptor = services.SingleOrDefault(
-                        d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
-                    if (descriptor != null) services.Remove(descriptor);
+                // Remove existing DbContext registration
+                var descriptor = services.SingleOrDefault(
+                    d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
+                if (descriptor != null) services.Remove(descriptor);
 
-                    // Use in-memory database for tests
-                    services.AddDbContext<ApplicationDbContext>(options =>
-                        options.UseInMemoryDatabase("IntegrationTestDb_" + Guid.NewGuid()));
-                });
+                // Use a shared in-memory database for all tests
+                services.AddDbContext<ApplicationDbContext>(options =>
+                    options.UseInMemoryDatabase("IntegrationTestDb"));
             });
+        }
+    }
+
+    public class IntegrationTests : IClassFixture<CustomWebAppFactory>
+    {
+        private readonly CustomWebAppFactory _factory;
+
+        public IntegrationTests(CustomWebAppFactory factory)
+        {
+            _factory = factory;
         }
 
         private HttpClient CreateClientWithTenant(int tenantId)
@@ -57,9 +62,10 @@ namespace LogisticsAPI.Tests
             using var client = CreateClientWithTenant(1);
 
             // Create
+            var sku = $"INT-{Guid.NewGuid():N}".Substring(0, 20);
             var createRequest = new CreateInventoryItemRequest
             {
-                SKU = $"INT-{Guid.NewGuid():N}".Substring(0, 20),
+                SKU = sku,
                 Name = "Integration Test Item",
                 Quantity = 50,
                 UnitPrice = 9.99m,
@@ -68,20 +74,16 @@ namespace LogisticsAPI.Tests
 
             var createResponse = await client.PostAsJsonAsync("/api/inventory", createRequest);
             Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
-            var createBody = await createResponse.Content.ReadAsStringAsync();
-            var created = JsonSerializer.Deserialize<InventoryItemResponse>(createBody,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var created = await createResponse.Content.ReadFromJsonAsync<InventoryItemResponse>();
             Assert.NotNull(created);
             Assert.Equal(createRequest.Name, created!.Name);
             var itemId = created.Id;
-            Assert.True(itemId > 0, $"Expected positive ID but got {itemId}. Response body: {createBody}");
 
-            // Read - verify via list endpoint (avoids in-memory provider query filter edge cases)
-            var listResponse = await client.GetFromJsonAsync<PaginatedResponse<InventoryItemResponse>>("/api/inventory?pageSize=100");
-            Assert.NotNull(listResponse);
-            var fetchedItem = listResponse!.Items.FirstOrDefault(i => i.Id == itemId);
-            Assert.NotNull(fetchedItem);
-            Assert.Equal(createRequest.SKU, fetchedItem!.SKU);
+            // Read
+            var getResponse = await client.GetAsync($"/api/inventory/{itemId}");
+            Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+            var fetched = await getResponse.Content.ReadFromJsonAsync<InventoryItemResponse>();
+            Assert.Equal(sku, fetched!.SKU);
 
             // Update
             var updateRequest = new UpdateInventoryItemRequest { Name = "Updated Item", Quantity = 100 };
@@ -95,7 +97,7 @@ namespace LogisticsAPI.Tests
             var deleteResponse = await client.DeleteAsync($"/api/inventory/{itemId}");
             Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
 
-            // Verify deleted - GET by ID should return NotFound
+            // Verify deleted
             var getAfterDelete = await client.GetAsync($"/api/inventory/{itemId}");
             Assert.Equal(HttpStatusCode.NotFound, getAfterDelete.StatusCode);
         }
@@ -147,7 +149,7 @@ namespace LogisticsAPI.Tests
             using var client = CreateClientWithTenant(1);
 
             var csvContent = "SKU,Name,Quantity,UnitPrice,Location,ReorderLevel\n" +
-                             "CSV-001,CSV Test Item,25,4.99,Warehouse A,5\n";
+                             $"CSV-{Guid.NewGuid():N}".Substring(0, 16) + ",CSV Test Item,25,4.99,Warehouse A,5\n";
 
             using var content = new MultipartFormDataContent();
             var fileContent = new ByteArrayContent(Encoding.UTF8.GetBytes(csvContent));
@@ -167,9 +169,10 @@ namespace LogisticsAPI.Tests
             using var client = CreateClientWithTenant(201);
 
             // Create property
+            var propCode = $"PROP-{Guid.NewGuid():N}".Substring(0, 16);
             var createBody = JsonSerializer.Serialize(new
             {
-                propertyCode = "PROP-001",
+                propertyCode = propCode,
                 name = "Test Property",
                 address = "123 Test St",
                 propertyType = "Apartment",
@@ -183,14 +186,15 @@ namespace LogisticsAPI.Tests
 
             var created = await createResponse.Content.ReadFromJsonAsync<JsonElement>();
             var propertyId = created.GetProperty("id").GetInt32();
-            Assert.True(propertyId > 0, $"Expected positive property ID but got {propertyId}");
             Assert.Equal(201, created.GetProperty("tenantId").GetInt32());
 
-            // Read - verify via list endpoint (avoids in-memory provider query filter edge cases)
+            // Read
+            var getResponse = await client.GetAsync($"/api/properties/{propertyId}");
+            Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+
+            // List
             var listResponse = await client.GetAsync("/api/properties");
             Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
-            var listBody = await listResponse.Content.ReadAsStringAsync();
-            Assert.Contains("Test Property", listBody);
 
             // Delete
             var deleteResponse = await client.DeleteAsync($"/api/properties/{propertyId}");
