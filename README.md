@@ -44,7 +44,7 @@ LogisticsInventory/
 - **Database**: SQLite (development), Azure SQL Database (production)
 - **Testing**: xUnit, Moq, EF Core InMemory provider
 - **CI/CD**: GitHub Actions
-- **Deployment**: Azure App Service (API + Blazor UI) with Azure SQL Database. Also available on Render (Docker). ARM templates in `azure/` for infrastructure-as-code
+- **Deployment**: Azure App Service (API + Blazor UI) with Azure SQL Database. ARM templates in `azure/` for infrastructure-as-code
 
 ## API Endpoints
 
@@ -174,7 +174,7 @@ Test coverage includes:
 
 ## Deployment
 
-### Azure (Primary)
+### Azure
 
 | Service | URL |
 |-|-|
@@ -182,21 +182,13 @@ Test coverage includes:
 | Blazor UI | https://logistics-inventory-ui-abdallah.azurewebsites.net/ |
 | Health Check | https://logistics-inventory-api-abdallah.azurewebsites.net/api/health |
 
-Deployed on Azure App Service (F1 Free tier) with Azure SQL Database (Basic tier) in Canada Central. Infrastructure is defined as ARM templates in the `azure/` directory. See [AZURE_DEPLOYMENT.md](AZURE_DEPLOYMENT.md) for full deployment instructions and redeployment commands.
+Deployed on Azure App Service (F1 Free tier) with Azure SQL Database (Basic tier) in Canada Central. Infrastructure is defined as ARM templates in the `azure/` directory. See [AZURE_DEPLOYMENT.md](AZURE_DEPLOYMENT.md) for full deployment instructions and redeployment commands. Originally also deployed on Render (Docker), migrated to Azure App Service + Azure SQL for production-grade database support.
 
 **Azure Resources:**
 - Resource Group: `logistics-inventory-rg` (Canada Central)
 - App Service Plan: F1 Free tier, shared between API and UI
 - App Services: `logistics-inventory-api-abdallah`, `logistics-inventory-ui-abdallah`
 - Database: Azure SQL Server + Database (Basic tier)
-
-### Render (Secondary)
-
-**Live API:** [https://logistics-inventory-api.onrender.com/swagger](https://logistics-inventory-api.onrender.com/swagger)
-
-Also deployed on Render's free tier as a Docker web service with SQLite (in-container). Swagger UI available at `/swagger`.
-
-> Note: Render free-tier services spin down after inactivity. The first request may take 30-60 seconds while the service wakes up.
 
 ### Docker (Local)
 
