@@ -8,20 +8,20 @@ A multi-tenant warehouse inventory management system for tracking items, categor
 LogisticsInventory/
 ├── src/
 │   ├── LogisticsAPI/          # .NET 8 Web API
-│   │   ├── Controllers/       # 8 REST controllers (JSON + XML)
+│   │   ├── Controllers/       # 10 REST controllers (JSON + XML)
 │   │   ├── Data/              # EF Core DbContext with multi-tenant filters
 │   │   ├── DTOs/              # Request/Response data contracts
 │   │   ├── Middleware/        # Tenant resolution, error handling
-│   │   ├── Models/            # 8 domain entities with relationships
+│   │   ├── Models/            # 12 domain entities with relationships
 │   │   ├── Repositories/     # Generic + specialized repository pattern
 │   │   ├── Services/         # Business logic layer
 │   │   └── Validation/       # Custom validation attributes
 │   └── LogisticsUI/          # Blazor Server frontend
-│       ├── Pages/            # 9 interactive pages
+│       ├── Pages/            # 8 interactive pages
 │       └── Shared/           # Layout and navigation
 ├── tests/
-│   └── LogisticsAPI.Tests/   # xUnit tests (40+ test methods)
-├── azure/                    # ARM deployment templates
+│   └── LogisticsAPI.Tests/   # xUnit tests (56 test methods)
+├── azure/                    # ARM templates (originally designed for Azure)
 ├── data/samples/             # Sample CSV files
 └── .github/workflows/        # CI/CD pipeline
 ```
@@ -44,7 +44,7 @@ LogisticsInventory/
 - **Database**: SQLite (development), SQL Server (production)
 - **Testing**: xUnit, Moq, EF Core InMemory provider
 - **CI/CD**: GitHub Actions
-- **Deployment**: Azure App Service with ARM templates
+- **Deployment**: Render (Docker). Originally designed for Azure App Service; ARM templates retained in `azure/` for reference
 
 ## API Endpoints
 
@@ -58,6 +58,8 @@ All endpoints support JSON and XML content negotiation.
 | Suppliers | `GET/POST/PUT/DELETE /api/supplier` |
 | Purchase Orders | `GET/POST /api/purchaseorder`, `PUT /api/purchaseorder/{id}/status` |
 | Stock Movements | `GET/POST /api/stockmovement`, `GET /api/stockmovement/item/{id}/history` |
+| Properties | `GET/POST/PUT/DELETE /api/properties`, `GET/POST /api/properties/owners` |
+| Reservations | `GET /api/reservations`, `GET /api/reservations/{id}`, `POST /api/reservations/upload`, `GET /api/reservations/report/monthly` |
 | Import | `POST /api/import/inventory` |
 | Reports | `GET /api/report/valuation`, `GET /api/report/low-stock`, `GET /api/report/total-value` |
 
