@@ -39,7 +39,7 @@ LogisticsInventory/
 
 ## Tech Stack
 
-- **Backend**: .NET 8, ASP.NET Core Web API, Entity Framework Core 9
+- **Backend**: .NET 8, ASP.NET Core Web API, Entity Framework Core 8
 - **Frontend**: Blazor Server with Bootstrap 5
 - **Database**: SQLite (development), Azure SQL Database (production)
 - **Testing**: xUnit, Moq, EF Core InMemory provider
