@@ -197,7 +197,13 @@ namespace LogisticsAPI.Data
 
                 var entityType = entry.Entity.GetType().Name;
                 var idProp = entry.Entity.GetType().GetProperty("Id");
-                var entityId = idProp != null ? (int)(idProp.GetValue(entry.Entity) ?? 0) : 0;
+                int entityId = 0;
+                if (idProp != null)
+                {
+                    var idValue = idProp.GetValue(entry.Entity);
+                    if (idValue is int intId) entityId = intId;
+                    else if (idValue != null && int.TryParse(idValue.ToString(), out var parsed)) entityId = parsed;
+                }
 
                 string action = entry.State switch
                 {
@@ -266,7 +272,7 @@ namespace LogisticsAPI.Data
                 if (entry.State == EntityState.Added)
                 {
                     var tenantProp = entry.Entity.GetType().GetProperty("TenantId");
-                    if (tenantProp != null && (int)tenantProp.GetValue(entry.Entity)! == 0)
+                    if (tenantProp != null && tenantProp.GetValue(entry.Entity) is int tid && tid == 0)
                     {
                         tenantProp.SetValue(entry.Entity, _tenantId);
                     }
