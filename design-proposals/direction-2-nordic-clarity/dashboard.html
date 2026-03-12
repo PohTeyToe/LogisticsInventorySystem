@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Valta — Inventory Clarity</title>
+
+<!--
+  DIRECTION 2: "NORDIC CLARITY"
+  Aesthetic: Light, airy, Scandinavian-inspired. Think Notion meets a premium SaaS tool.
+  Tone: Calm precision. Warm whites, generous spacing, subtle borders, beautiful typography.
+  Font: "Instrument Serif" for display headings (unexpected warmth), "Geist" for body/data.
+  Color: Warm off-white base (#FAFAF8), deep navy text (#1A1D23), slate blue accent (#4F6BF6),
+         soft sage (#E8F0E4) and warm coral (#F4845F) for status.
+  Signature: Serif headings on a clean interface feel editorial and premium. Horizontal card
+             layouts with generous padding. Data breathes.
+  Target: Ops managers who want a tool that feels calm, not chaotic.
+-->
+
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Fallback if Geist isn't available via Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-page: #FAFAF8;
+    --bg-white: #FFFFFF;
+    --bg-subtle: #F5F5F2;
+    --bg-muted: #EFEFE9;
+    --bg-hover: #F0F0EC;
+
+    --border-light: #E8E8E2;
+    --border-medium: #D8D8D0;
+
+    --text-primary: #1A1D23;
+    --text-secondary: #6B7280;
+    --text-tertiary: #9CA3AF;
+
+    --accent-blue: #4F6BF6;
+    --accent-blue-light: #EEF0FF;
+    --accent-blue-hover: #3D56E0;
+
+    --sage: #2D8B4E;
+    --sage-bg: #E8F5E9;
+    --coral: #E8553D;
+    --coral-bg: #FFF0EC;
+    --amber: #C07C15;
+    --amber-bg: #FFF8E7;
+    --slate: #5B6AD0;
+    --slate-bg: #EEF0FF;
+
+    --font-display: 'Instrument Serif', 'Georgia', serif;
+    --font-body: 'Geist', 'Plus Jakarta Sans', -apple-system, sans-serif;
+
+    --sidebar-width: 248px;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  html { font-size: 14px; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg-page);
+    color: var(--text-primary);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* === LAYOUT === */
+  .app {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr;
+    min-height: 100vh;
+  }
+
+  /* === SIDEBAR === */
+  .sidebar {
+    background: var(--bg-white);
+    border-right: 1px solid var(--border-light);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .sidebar-header {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .logo {
+    font-family: var(--font-display);
+    font-size: 26px;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+    margin-bottom: 16px;
+  }
+
+  .logo em {
+    font-style: italic;
+    color: var(--accent-blue);
+  }
+
+  /* Tenant pill */
+  .tenant-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--bg-subtle);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .tenant-pill:hover { background: var(--bg-muted); }
+
+  .tenant-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, var(--accent-blue), #7C8FFF);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 11px;
+  }
+
+  .tenant-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .tenant-info-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tenant-info-role {
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+
+  .tenant-pill svg {
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+  }
+
+  /* Nav sections */
+  .nav-section {
+    padding: 16px 12px 4px;
+  }
+
+  .nav-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 0 8px;
+    margin-bottom: 4px;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 500;
+    transition: all 0.15s;
+    cursor: pointer;
+  }
+
+  .nav-link:hover {
+    background: var(--bg-subtle);
+    color: var(--text-primary);
+  }
+
+  .nav-link.active {
+    background: var(--accent-blue-light);
+    color: var(--accent-blue);
+    font-weight: 600;
+  }
+
+  .nav-link-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .nav-link-badge {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--coral-bg);
+    color: var(--coral);
+    padding: 1px 7px;
+    border-radius: 10px;
+  }
+
+  .sidebar-bottom {
+    margin-top: auto;
+    padding: 12px;
+    border-top: 1px solid var(--border-light);
+  }
+
+  .sidebar-bottom .nav-link {
+    color: var(--text-tertiary);
+    font-size: 13px;
+  }
+
+  /* === MAIN === */
+  .main {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Top bar */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 32px;
+    border-bottom: 1px solid var(--border-light);
+    background: var(--bg-white);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+
+  .topbar-title {
+    font-family: var(--font-display);
+    font-size: 24px;
+    color: var(--text-primary);
+  }
+
+  .topbar-subtitle {
+    font-size: 13px;
+    color: var(--text-tertiary);
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    min-width: 240px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .search-box:focus-within {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px var(--accent-blue-light);
+    background: var(--bg-white);
+  }
+
+  .search-box svg { color: var(--text-tertiary); flex-shrink: 0; }
+
+  .search-box input {
+    border: none;
+    background: none;
+    outline: none;
+    font-size: 13px;
+    font-family: var(--font-body);
+    color: var(--text-primary);
+    width: 100%;
+  }
+
+  .search-box input::placeholder { color: var(--text-tertiary); }
+
+  .search-kbd {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    background: var(--bg-white);
+    border: 1px solid var(--border-medium);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+    background: var(--bg-white);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .icon-btn:hover {
+    background: var(--bg-subtle);
+    border-color: var(--border-medium);
+  }
+
+  .icon-btn .dot {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    width: 6px;
+    height: 6px;
+    background: var(--coral);
+    border-radius: 50%;
+    border: 1.5px solid var(--bg-white);
+  }
+
+  /* === PAGE CONTENT === */
+  .page-content {
+    padding: 28px 32px;
+    max-width: 1400px;
+  }
+
+  /* Date + filters bar */
+  .controls-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .date-display {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .date-display strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: 6px;
+  }
+
+  .filter-btn {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border-light);
+    background: var(--bg-white);
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    font-weight: 500;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .filter-btn:hover { border-color: var(--border-medium); }
+  .filter-btn.active {
+    background: var(--text-primary);
+    color: var(--bg-white);
+    border-color: var(--text-primary);
+  }
+
+  /* === KPI CARDS === */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .kpi {
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    padding: 24px;
+    transition: box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  .kpi-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .kpi-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .kpi-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .kpi-badge.up {
+    background: var(--sage-bg);
+    color: var(--sage);
+  }
+
+  .kpi-badge.down {
+    background: var(--coral-bg);
+    color: var(--coral);
+  }
+
+  .kpi-value {
+    font-family: var(--font-display);
+    font-size: 36px;
+    line-height: 1;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+
+  .kpi-sub {
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+
+  /* Colored left border accent */
+  .kpi.blue { border-left: 3px solid var(--accent-blue); }
+  .kpi.sage { border-left: 3px solid var(--sage); }
+  .kpi.coral { border-left: 3px solid var(--coral); }
+  .kpi.amber { border-left: 3px solid var(--amber); }
+
+  /* === CONTENT LAYOUT === */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .two-col-equal {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* === PANELS === */
+  .panel {
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 18px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .panel-title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    color: var(--text-primary);
+  }
+
+  .panel-action {
+    font-size: 12.5px;
+    color: var(--accent-blue);
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+    transition: background 0.15s;
+  }
+
+  .panel-action:hover { background: var(--accent-blue-light); }
+
+  /* === TABLE === */
+  .clean-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .clean-table thead th {
+    padding: 10px 20px;
+    text-align: left;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    background: var(--bg-subtle);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .clean-table tbody tr {
+    border-bottom: 1px solid var(--bg-muted);
+    transition: background 0.1s;
+  }
+
+  .clean-table tbody tr:last-child { border-bottom: none; }
+  .clean-table tbody tr:hover { background: var(--bg-subtle); }
+
+  .clean-table td {
+    padding: 12px 20px;
+    color: var(--text-secondary);
+  }
+
+  .clean-table .primary { color: var(--text-primary); font-weight: 500; }
+  .clean-table .mono { font-variant-numeric: tabular-nums; }
+
+  /* Status chips */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .chip.green { background: var(--sage-bg); color: var(--sage); }
+  .chip.red { background: var(--coral-bg); color: var(--coral); }
+  .chip.blue { background: var(--slate-bg); color: var(--slate); }
+  .chip.yellow { background: var(--amber-bg); color: var(--amber); }
+
+  .chip::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  /* === LOW STOCK ITEMS === */
+  .stock-items {
+    padding: 4px 0;
+  }
+
+  .stock-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--bg-muted);
+    transition: background 0.1s;
+    cursor: pointer;
+  }
+
+  .stock-item:last-child { border-bottom: none; }
+  .stock-item:hover { background: var(--bg-subtle); }
+
+  .stock-item-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .stock-item-icon.critical {
+    background: var(--coral-bg);
+    color: var(--coral);
+  }
+
+  .stock-item-icon.warning {
+    background: var(--amber-bg);
+    color: var(--amber);
+  }
+
+  .stock-item-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .stock-item-name {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+  }
+
+  .stock-item-sku {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stock-item-qty {
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .stock-item-current {
+    font-size: 16px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 1px;
+  }
+
+  .stock-item-current.critical { color: var(--coral); }
+  .stock-item-current.warning { color: var(--amber); }
+
+  .stock-item-reorder {
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+
+  /* === CATEGORY VALUE BARS === */
+  .category-bars {
+    padding: 20px 24px;
+  }
+
+  .cat-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .cat-bar-row:last-child { margin-bottom: 0; }
+
+  .cat-bar-label {
+    width: 100px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .cat-bar-track {
+    flex: 1;
+    height: 24px;
+    background: var(--bg-subtle);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .cat-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: var(--accent-blue);
+    opacity: 0.75;
+    transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+  }
+
+  .cat-bar-fill .val {
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+  }
+
+  .cat-bar-row:nth-child(2) .cat-bar-fill { opacity: 0.62; }
+  .cat-bar-row:nth-child(3) .cat-bar-fill { opacity: 0.50; }
+  .cat-bar-row:nth-child(4) .cat-bar-fill { opacity: 0.40; }
+  .cat-bar-row:nth-child(5) .cat-bar-fill { opacity: 0.32; }
+
+  .cat-bar-amount {
+    width: 80px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+
+  /* === PO STATUS SUMMARY === */
+  .po-summary {
+    padding: 24px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .po-status-card {
+    text-align: center;
+    padding: 20px 12px;
+    border-radius: var(--radius-sm);
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+
+  .po-status-card:hover { background: var(--bg-subtle); }
+
+  .po-status-count {
+    font-family: var(--font-display);
+    font-size: 32px;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .po-status-card.pending .po-status-count { color: var(--amber); }
+  .po-status-card.approved .po-status-count { color: var(--accent-blue); }
+  .po-status-card.shipped .po-status-count { color: var(--slate); }
+  .po-status-card.received .po-status-count { color: var(--sage); }
+
+  .po-status-label {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-weight: 500;
+  }
+
+  /* Connector arrows between stages */
+  .po-summary-with-arrows {
+    position: relative;
+  }
+
+  /* === ANIMATIONS === */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .kpi { animation: fadeIn 0.4s ease both; }
+  .kpi:nth-child(1) { animation-delay: 0s; }
+  .kpi:nth-child(2) { animation-delay: 0.06s; }
+  .kpi:nth-child(3) { animation-delay: 0.12s; }
+  .kpi:nth-child(4) { animation-delay: 0.18s; }
+
+  .panel { animation: fadeIn 0.45s ease both; animation-delay: 0.22s; }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 1024px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .two-col { grid-template-columns: 1fr; }
+    .two-col-equal { grid-template-columns: 1fr; }
+    .page-content { padding: 20px 16px; }
+  }
+
+  @media (max-width: 640px) {
+    .kpi-grid { grid-template-columns: 1fr; }
+    .po-summary { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">V<em>a</em>lta</div>
+      <div class="tenant-pill">
+        <div class="tenant-avatar">MC</div>
+        <div class="tenant-info">
+          <div class="tenant-info-name">Maple Creek Logistics</div>
+          <div class="tenant-info-role">Operations Manager</div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <a class="nav-link active" href="#">
+        <svg class="nav-link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        Dashboard
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Inventory</div>
+      <a class="nav-link" href="#">
+        <svg class="nav-link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        All Items
+        <span class="nav-link-badge">3</span>
+      </a>
+      <a class="nav-link" href="#">
+        <svg class="nav-link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Categories
+      </a>
+      <a class="nav-link" href="#">
+        <svg class="nav-link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Warehouses
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Supply Chain</div>
+      <a class="nav-link" href="#">
+        <svg class="nav-link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/></svg>
+        Suppliers
+      </a>
+      <a class="nav-link" href="#">
+        <svg class="nav-link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Purchase Orders
+      </a>
+      <a class="nav-link" href="#">
+        <svg class="nav-link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+        Stock Movements
+      </a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Tools</div>
+      <a class="nav-link" href="#">
+        <svg class="nav-link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Import Data
+      </a>
+      <a class="nav-link" href="#">
+        <svg class="nav-link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21.21 15.89A10 10 0 118 2.83"/><polyline points="22 12 22 2 12 2"/></svg>
+        Reports
+      </a>
+    </div>
+
+    <div class="sidebar-bottom">
+      <a class="nav-link" href="#">
+        <svg class="nav-link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Settings
+      </a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title">Dashboard</div>
+        <div class="topbar-subtitle">Last updated 2 minutes ago</div>
+      </div>
+      <div class="topbar-right">
+        <div class="search-box">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" placeholder="Search inventory...">
+          <span class="search-kbd">/</span>
+        </div>
+        <button class="icon-btn" title="Notifications">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <div class="dot"></div>
+        </button>
+        <button class="icon-btn" title="Export">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="page-content">
+
+      <!-- CONTROLS -->
+      <div class="controls-bar">
+        <div class="date-display">
+          <strong>March 11, 2026</strong> &mdash; Week 11
+        </div>
+        <div class="filter-group">
+          <button class="filter-btn active">Today</button>
+          <button class="filter-btn">7 Days</button>
+          <button class="filter-btn">30 Days</button>
+          <button class="filter-btn">Quarter</button>
+        </div>
+      </div>
+
+      <!-- KPI CARDS -->
+      <div class="kpi-grid">
+        <div class="kpi blue">
+          <div class="kpi-top">
+            <div class="kpi-label">Total Items</div>
+            <div class="kpi-badge up">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 15l7-7 7 7"/></svg>
+              12.3%
+            </div>
+          </div>
+          <div class="kpi-value">1,247</div>
+          <div class="kpi-sub">across 4 warehouses</div>
+        </div>
+
+        <div class="kpi sage">
+          <div class="kpi-top">
+            <div class="kpi-label">Inventory Value</div>
+            <div class="kpi-badge up">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 15l7-7 7 7"/></svg>
+              4.7%
+            </div>
+          </div>
+          <div class="kpi-value">$842,650</div>
+          <div class="kpi-sub">+$37,800 this month</div>
+        </div>
+
+        <div class="kpi coral">
+          <div class="kpi-top">
+            <div class="kpi-label">Low Stock Alerts</div>
+            <div class="kpi-badge down">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M19 9l-7 7-7-7"/></svg>
+              2
+            </div>
+          </div>
+          <div class="kpi-value">3</div>
+          <div class="kpi-sub">below reorder threshold</div>
+        </div>
+
+        <div class="kpi amber">
+          <div class="kpi-top">
+            <div class="kpi-label">Pending Orders</div>
+            <div class="kpi-badge up">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 15l7-7 7 7"/></svg>
+              3
+            </div>
+          </div>
+          <div class="kpi-value">7</div>
+          <div class="kpi-sub">$52,400 total value</div>
+        </div>
+      </div>
+
+      <!-- MAIN TWO-COL: Movements + Low Stock -->
+      <div class="two-col">
+
+        <!-- Recent Movements -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Recent Movements</div>
+            <a class="panel-action">View all</a>
+          </div>
+          <table class="clean-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Item</th>
+                <th>Type</th>
+                <th>Qty</th>
+                <th>Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">14:32</td>
+                <td class="primary">Steel Bolts M10</td>
+                <td><span class="chip green">IN</span></td>
+                <td class="mono">+500</td>
+                <td>PO received</td>
+              </tr>
+              <tr>
+                <td class="mono">13:15</td>
+                <td class="primary">Copper Wire 2mm</td>
+                <td><span class="chip red">OUT</span></td>
+                <td class="mono">-120</td>
+                <td>Order #4521</td>
+              </tr>
+              <tr>
+                <td class="mono">12:48</td>
+                <td class="primary">Packing Tape Clear</td>
+                <td><span class="chip blue">ADJ</span></td>
+                <td class="mono">-8</td>
+                <td>Cycle count</td>
+              </tr>
+              <tr>
+                <td class="mono">11:20</td>
+                <td class="primary">Rubber Gaskets 5cm</td>
+                <td><span class="chip green">IN</span></td>
+                <td class="mono">+200</td>
+                <td>QA release</td>
+              </tr>
+              <tr>
+                <td class="mono">10:55</td>
+                <td class="primary">LED Panel Light</td>
+                <td><span class="chip red">OUT</span></td>
+                <td class="mono">-45</td>
+                <td>Warehouse transfer</td>
+              </tr>
+              <tr>
+                <td class="mono">09:30</td>
+                <td class="primary">Nylon Zip Ties</td>
+                <td><span class="chip green">IN</span></td>
+                <td class="mono">+1000</td>
+                <td>PO received</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Low Stock Alerts -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Low Stock</div>
+            <a class="panel-action">Auto-reorder</a>
+          </div>
+          <div class="stock-items">
+            <div class="stock-item">
+              <div class="stock-item-icon critical">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+              </div>
+              <div class="stock-item-info">
+                <div class="stock-item-name">Copper Wire 2mm</div>
+                <div class="stock-item-sku">CPR-WRE-002 &middot; Warehouse A</div>
+              </div>
+              <div class="stock-item-qty">
+                <div class="stock-item-current critical">3</div>
+                <div class="stock-item-reorder">Reorder: 50</div>
+              </div>
+            </div>
+            <div class="stock-item">
+              <div class="stock-item-icon critical">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+              </div>
+              <div class="stock-item-info">
+                <div class="stock-item-name">Safety Goggles Pro</div>
+                <div class="stock-item-sku">SFT-GGL-PRO &middot; Warehouse B</div>
+              </div>
+              <div class="stock-item-qty">
+                <div class="stock-item-current critical">5</div>
+                <div class="stock-item-reorder">Reorder: 25</div>
+              </div>
+            </div>
+            <div class="stock-item">
+              <div class="stock-item-icon warning">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </div>
+              <div class="stock-item-info">
+                <div class="stock-item-name">Packing Tape Clear</div>
+                <div class="stock-item-sku">PKG-TPE-CLR &middot; Warehouse A</div>
+              </div>
+              <div class="stock-item-qty">
+                <div class="stock-item-current warning">12</div>
+                <div class="stock-item-reorder">Reorder: 20</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTTOM ROW: Category Breakdown + PO Pipeline -->
+      <div class="two-col-equal">
+
+        <!-- Category Value -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Value by Category</div>
+            <a class="panel-action">Full report</a>
+          </div>
+          <div class="category-bars">
+            <div class="cat-bar-row">
+              <div class="cat-bar-label">Fasteners</div>
+              <div class="cat-bar-track">
+                <div class="cat-bar-fill" style="width: 92%">
+                  <span class="val">$245K</span>
+                </div>
+              </div>
+              <div class="cat-bar-amount">$245,120</div>
+            </div>
+            <div class="cat-bar-row">
+              <div class="cat-bar-label">Electronics</div>
+              <div class="cat-bar-track">
+                <div class="cat-bar-fill" style="width: 74%">
+                  <span class="val">$198K</span>
+                </div>
+              </div>
+              <div class="cat-bar-amount">$198,400</div>
+            </div>
+            <div class="cat-bar-row">
+              <div class="cat-bar-label">Hardware</div>
+              <div class="cat-bar-track">
+                <div class="cat-bar-fill" style="width: 58%">
+                  <span class="val">$156K</span>
+                </div>
+              </div>
+              <div class="cat-bar-amount">$156,200</div>
+            </div>
+            <div class="cat-bar-row">
+              <div class="cat-bar-label">Packaging</div>
+              <div class="cat-bar-track">
+                <div class="cat-bar-fill" style="width: 40%">
+                  <span class="val">$108K</span>
+                </div>
+              </div>
+              <div class="cat-bar-amount">$108,500</div>
+            </div>
+            <div class="cat-bar-row">
+              <div class="cat-bar-label">Safety</div>
+              <div class="cat-bar-track">
+                <div class="cat-bar-fill" style="width: 28%">
+                  <span class="val">$74K</span>
+                </div>
+              </div>
+              <div class="cat-bar-amount">$74,430</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Purchase Order Pipeline -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Order Pipeline</div>
+            <a class="panel-action">Create order</a>
+          </div>
+          <div class="po-summary">
+            <div class="po-status-card pending">
+              <div class="po-status-count">7</div>
+              <div class="po-status-label">Pending</div>
+            </div>
+            <div class="po-status-card approved">
+              <div class="po-status-count">4</div>
+              <div class="po-status-label">Approved</div>
+            </div>
+            <div class="po-status-card shipped">
+              <div class="po-status-count">2</div>
+              <div class="po-status-label">In Transit</div>
+            </div>
+            <div class="po-status-card received">
+              <div class="po-status-count">12</div>
+              <div class="po-status-label">Received</div>
+            </div>
+          </div>
+
+          <!-- Recent POs -->
+          <table class="clean-table">
+            <thead>
+              <tr>
+                <th>PO #</th>
+                <th>Supplier</th>
+                <th>Status</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono primary">PO-0192</td>
+                <td>Acme Industrial</td>
+                <td><span class="chip yellow">Pending</span></td>
+                <td class="mono">$4,250</td>
+              </tr>
+              <tr>
+                <td class="mono primary">PO-0191</td>
+                <td>Pacific Metals</td>
+                <td><span class="chip blue">Approved</span></td>
+                <td class="mono">$12,800</td>
+              </tr>
+              <tr>
+                <td class="mono primary">PO-0190</td>
+                <td>Bright Star</td>
+                <td><span class="chip green">Received</span></td>
+                <td class="mono">$3,100</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

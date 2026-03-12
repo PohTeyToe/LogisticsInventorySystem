@@ -1,0 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-deep: #0A0E14;
+  --bg-surface: #0D1117;
+  --bg-card: #161B22;
+  --bg-elevated: #1C2128;
+  --bg-input: #21262D;
+
+  --border-subtle: #30363D;
+  --border-muted: #21262D;
+
+  --text-primary: #E6EDF3;
+  --text-secondary: #8B949E;
+  --text-muted: #484F58;
+
+  --accent-teal: #00D4AA;
+  --accent-teal-dim: rgba(0, 212, 170, 0.15);
+  --accent-teal-glow: rgba(0, 212, 170, 0.4);
+
+  --status-success: #3FB950;
+  --status-warning: #D29922;
+  --status-danger: #F85149;
+  --status-info: #58A6FF;
+
+  --amber: #F59E0B;
+  --amber-dim: rgba(245, 158, 11, 0.12);
+
+  --font-data: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+  --font-ui: 'DM Sans', -apple-system, sans-serif;
+
+  --sidebar-width: 260px;
+  --header-height: 56px;
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+html { font-size: 14px; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 212, 170, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 170, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-surface); }
+::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* Animations */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-slide-up { animation: slideUp 0.5s ease both; }

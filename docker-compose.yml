@@ -1,21 +1,59 @@
-version: '3.8'
-services:
-  api:
-    build: .
-    ports:
-      - "7001:8080"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-    volumes:
-      - ./data:/app/data
+version: "3.8"
 
-  ui:
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: logistics-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Logistics@Dev123"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/lib/mssql/data
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Logistics@Dev123" -Q "SELECT 1" -C -b
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - logistics-network
+
+  api:
     build:
       context: .
-      dockerfile: Dockerfile.ui
-    ports:
-      - "7002:8080"
+      dockerfile: src/LogisticsAPI/Dockerfile
+    container_name: logistics-api
     environment:
-      - ApiBaseUrl=http://api:8080
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__SqlServer: "Server=sqlserver;Database=LogisticsInventory;User Id=sa;Password=Logistics@Dev123;TrustServerCertificate=True;"
+    ports:
+      - "7001:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - logistics-network
+
+  frontend:
+    build:
+      context: ./src/logistics-dashboard
+      dockerfile: Dockerfile
+    container_name: logistics-frontend
+    environment:
+      VITE_API_URL: "http://localhost:7001"
+    ports:
+      - "3000:80"
     depends_on:
       - api
+    networks:
+      - logistics-network
+
+volumes:
+  sqlserver_data:
+
+networks:
+  logistics-network:
+    driver: bridge

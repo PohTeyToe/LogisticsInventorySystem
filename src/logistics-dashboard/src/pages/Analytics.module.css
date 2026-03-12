@@ -1,0 +1,193 @@
+.content {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* KPI Row */
+.kpiRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* Section title */
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 12px;
+  font-family: var(--font-ui);
+}
+
+/* Chart grids */
+.chartGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.chartGridFull {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* ABC Legend */
+.abcLegend {
+  display: flex;
+  gap: 16px;
+  padding: 12px 0 0 0;
+  justify-content: center;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: var(--font-data);
+}
+
+.legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* Treemap container */
+.treemapContainer {
+  width: 100%;
+  min-height: 280px;
+}
+
+/* Treemap custom cell */
+.treemapLabel {
+  font-family: var(--font-data);
+  font-size: 11px;
+  fill: var(--text-primary);
+  pointer-events: none;
+}
+
+.treemapValue {
+  font-family: var(--font-data);
+  font-size: 10px;
+  fill: var(--text-secondary);
+  pointer-events: none;
+}
+
+/* Data table */
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.dataTable thead th {
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  font-weight: 600;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-muted);
+  white-space: nowrap;
+}
+
+.dataTable tbody tr {
+  border-bottom: 1px solid var(--border-muted);
+  transition: background 0.1s;
+}
+
+.dataTable tbody tr:last-child { border-bottom: none; }
+.dataTable tbody tr:hover { background: var(--bg-elevated); }
+
+.dataTable td {
+  padding: 10px 16px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.mono { font-family: var(--font-data); font-size: 12px; }
+.primaryText { color: var(--text-primary) !important; font-weight: 500; }
+.empty { text-align: center; padding: 40px 20px !important; color: var(--text-muted); }
+
+.positive { color: var(--status-success) !important; }
+.negative { color: var(--status-danger) !important; }
+.neutral { color: var(--text-muted) !important; }
+
+/* Empty state */
+.emptyState {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* Loading skeleton wrapper */
+.skeletonChartArea {
+  height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* Custom tooltip */
+.tooltip {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: 12px;
+  font-family: var(--font-data);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.tooltipLabel {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.tooltipRow {
+  color: var(--text-secondary);
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  line-height: 1.6;
+}
+
+.tooltipDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+/* Responsive */
+@media (max-width: 1280px) {
+  .chartGrid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 1024px) {
+  .kpiRow { grid-template-columns: repeat(2, 1fr); }
+  .chartGrid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .kpiRow { grid-template-columns: 1fr; }
+  .content { padding: 12px; }
+}

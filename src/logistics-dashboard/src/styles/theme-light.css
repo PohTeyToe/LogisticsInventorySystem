@@ -1,0 +1,47 @@
+[data-theme="light"] {
+  --bg-deep: #EFF2F5;
+  --bg-surface: #F6F8FA;
+  --bg-card: #FFFFFF;
+  --bg-elevated: #F0F3F6;
+  --bg-input: #E8ECF0;
+
+  --border-subtle: #D0D7DE;
+  --border-muted: #B8C0CC;
+
+  --text-primary: #1F2328;
+  --text-secondary: #656D76;
+  --text-muted: #8B949E;
+
+  /* Accent colors stay the same */
+  --accent-teal: #00D4AA;
+  --accent-teal-dim: rgba(0, 212, 170, 0.1);
+  --accent-teal-glow: rgba(0, 212, 170, 0.25);
+
+  --status-success: #1A7F37;
+  --status-warning: #9A6700;
+  --status-danger: #CF222E;
+  --status-info: #0969DA;
+
+  --amber: #D97706;
+  --amber-dim: rgba(217, 119, 6, 0.08);
+}
+
+/* Light scrollbar */
+[data-theme="light"] ::-webkit-scrollbar-track {
+  background: var(--bg-elevated);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Soften the grid overlay for light theme */
+[data-theme="light"] body::before {
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+}

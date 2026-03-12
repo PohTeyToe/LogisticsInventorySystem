@@ -68,6 +68,8 @@ builder.Services.AddCors(options =>
                   "https://localhost:7146",
                   "http://localhost:7001",
                   "http://localhost:7002",
+                  "http://localhost:5173",
+                  "http://localhost:4173",
                   "https://logistics-inventory-api.onrender.com",
                   "https://logistics-inventory-api.azurewebsites.net",
                   "https://logistics-inventory-ui.azurewebsites.net",

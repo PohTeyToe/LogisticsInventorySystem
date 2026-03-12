@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LogisticsPulse — Command Center</title>
+
+<!--
+  DIRECTION 1: "COMMAND CENTER"
+  Aesthetic: Dark industrial control room. Think air traffic control meets warehouse ops.
+  Tone: High-density data, always-on monitoring, precise and authoritative.
+  Font: JetBrains Mono for data (monospaced = scannable numbers), DM Sans for UI chrome.
+  Color: Deep charcoal base (#0D1117), electric teal accent (#00D4AA), warm amber alerts (#F59E0B).
+  Signature: Glowing status indicators, subtle grid background, data that feels "live".
+  Target: Wall-mounted warehouse monitors + ops manager desktops.
+-->
+
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-deep: #0A0E14;
+    --bg-surface: #0D1117;
+    --bg-card: #161B22;
+    --bg-elevated: #1C2128;
+    --bg-input: #21262D;
+
+    --border-subtle: #30363D;
+    --border-muted: #21262D;
+
+    --text-primary: #E6EDF3;
+    --text-secondary: #8B949E;
+    --text-muted: #484F58;
+
+    --accent-teal: #00D4AA;
+    --accent-teal-dim: rgba(0, 212, 170, 0.15);
+    --accent-teal-glow: rgba(0, 212, 170, 0.4);
+
+    --status-success: #3FB950;
+    --status-warning: #D29922;
+    --status-danger: #F85149;
+    --status-info: #58A6FF;
+
+    --amber: #F59E0B;
+    --amber-dim: rgba(245, 158, 11, 0.12);
+
+    --font-data: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+    --font-ui: 'DM Sans', -apple-system, sans-serif;
+
+    --sidebar-width: 260px;
+    --header-height: 56px;
+
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+
+  html { font-size: 14px; }
+
+  body {
+    font-family: var(--font-ui);
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* === GRID BACKGROUND TEXTURE === */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0, 212, 170, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 212, 170, 0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* === LAYOUT SHELL === */
+  .app-layout {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr;
+    grid-template-rows: var(--header-height) 1fr;
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* === SIDEBAR === */
+  .sidebar {
+    grid-row: 1 / -1;
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .sidebar-brand {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: var(--header-height);
+  }
+
+  .brand-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--accent-teal), #00A67E);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--bg-deep);
+    box-shadow: 0 0 12px var(--accent-teal-glow);
+  }
+
+  .brand-text {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: -0.3px;
+    color: var(--text-primary);
+  }
+
+  .brand-text span {
+    color: var(--accent-teal);
+  }
+
+  /* Tenant Switcher */
+  .tenant-switcher {
+    margin: 12px 12px 0;
+    padding: 10px 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  .tenant-switcher:hover {
+    border-color: var(--accent-teal);
+  }
+
+  .tenant-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .tenant-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-primary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .tenant-name svg { color: var(--text-muted); }
+
+  /* Nav Groups */
+  .nav-group {
+    padding: 16px 0 4px;
+  }
+
+  .nav-group-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-muted);
+    font-weight: 600;
+    padding: 0 20px;
+    margin-bottom: 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 20px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+    position: relative;
+    cursor: pointer;
+  }
+
+  .nav-item:hover {
+    color: var(--text-primary);
+    background: var(--bg-elevated);
+  }
+
+  .nav-item.active {
+    color: var(--accent-teal);
+    background: var(--accent-teal-dim);
+  }
+
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 4px;
+    bottom: 4px;
+    width: 3px;
+    background: var(--accent-teal);
+    border-radius: 0 2px 2px 0;
+  }
+
+  .nav-icon {
+    width: 18px;
+    height: 18px;
+    opacity: 0.7;
+    flex-shrink: 0;
+  }
+
+  .nav-item.active .nav-icon { opacity: 1; }
+
+  .nav-badge {
+    margin-left: auto;
+    background: var(--status-danger);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-family: var(--font-data);
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 12px;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .system-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--status-success);
+    box-shadow: 0 0 6px var(--status-success);
+    animation: pulse-dot 2s infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* === HEADER === */
+  .header {
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    height: var(--header-height);
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .page-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .live-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-family: var(--font-data);
+    color: var(--status-success);
+    background: rgba(63, 185, 80, 0.1);
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(63, 185, 80, 0.2);
+  }
+
+  .live-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--status-success);
+    animation: pulse-dot 1.5s infinite;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .header-search {
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 6px 12px;
+    color: var(--text-primary);
+    font-size: 13px;
+    width: 220px;
+    outline: none;
+    font-family: var(--font-ui);
+    transition: border-color 0.2s;
+  }
+
+  .header-search::placeholder { color: var(--text-muted); }
+  .header-search:focus { border-color: var(--accent-teal); }
+
+  .header-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-input);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .header-btn:hover {
+    border-color: var(--accent-teal);
+    color: var(--accent-teal);
+  }
+
+  .header-btn .notif-dot {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--status-danger);
+    border: 2px solid var(--bg-surface);
+  }
+
+  /* === MAIN CONTENT === */
+  .main-content {
+    padding: 20px 24px;
+    overflow-y: auto;
+    background: var(--bg-deep);
+  }
+
+  /* === KPI ROW === */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .kpi-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .kpi-card:hover { border-color: var(--border-subtle); }
+
+  .kpi-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+  }
+
+  .kpi-card.teal::after { background: var(--accent-teal); }
+  .kpi-card.blue::after { background: var(--status-info); }
+  .kpi-card.amber::after { background: var(--amber); }
+  .kpi-card.green::after { background: var(--status-success); }
+
+  .kpi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+
+  .kpi-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .kpi-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .kpi-card.teal .kpi-icon { background: var(--accent-teal-dim); color: var(--accent-teal); }
+  .kpi-card.blue .kpi-icon { background: rgba(88, 166, 255, 0.12); color: var(--status-info); }
+  .kpi-card.amber .kpi-icon { background: var(--amber-dim); color: var(--amber); }
+  .kpi-card.green .kpi-icon { background: rgba(63, 185, 80, 0.12); color: var(--status-success); }
+
+  .kpi-value {
+    font-family: var(--font-data);
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .kpi-card.teal .kpi-value { color: var(--accent-teal); }
+  .kpi-card.blue .kpi-value { color: var(--status-info); }
+  .kpi-card.amber .kpi-value { color: var(--amber); }
+  .kpi-card.green .kpi-value { color: var(--status-success); }
+
+  .kpi-trend {
+    font-size: 11px;
+    font-family: var(--font-data);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .kpi-trend.up { color: var(--status-success); }
+  .kpi-trend.down { color: var(--status-danger); }
+  .kpi-trend.flat { color: var(--text-muted); }
+
+  .kpi-sparkline {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    opacity: 0.15;
+  }
+
+  /* === CONTENT GRID === */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .content-grid-full {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* === CARD === */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .card-head {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-muted);
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title .count {
+    font-family: var(--font-data);
+    font-size: 11px;
+    background: var(--bg-elevated);
+    padding: 2px 8px;
+    border-radius: 10px;
+    color: var(--text-secondary);
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .btn-ghost {
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 500;
+    font-family: var(--font-ui);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-ghost:hover {
+    border-color: var(--accent-teal);
+    color: var(--accent-teal);
+  }
+
+  .card-body {
+    padding: 0;
+  }
+
+  /* === DATA TABLE === */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .data-table thead th {
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    font-weight: 600;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border-muted);
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+  }
+
+  .data-table tbody tr {
+    border-bottom: 1px solid var(--border-muted);
+    transition: background 0.1s;
+  }
+
+  .data-table tbody tr:last-child { border-bottom: none; }
+  .data-table tbody tr:hover { background: var(--bg-elevated); }
+
+  .data-table td {
+    padding: 10px 16px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+
+  .data-table .col-mono {
+    font-family: var(--font-data);
+    font-size: 12px;
+  }
+
+  .data-table .col-primary {
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  /* Status badges */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--font-data);
+  }
+
+  .status-badge::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+  }
+
+  .status-badge.in {
+    background: rgba(63, 185, 80, 0.12);
+    color: var(--status-success);
+  }
+  .status-badge.in::before { background: var(--status-success); }
+
+  .status-badge.out {
+    background: rgba(248, 81, 73, 0.12);
+    color: var(--status-danger);
+  }
+  .status-badge.out::before { background: var(--status-danger); }
+
+  .status-badge.adjustment {
+    background: rgba(88, 166, 255, 0.12);
+    color: var(--status-info);
+  }
+  .status-badge.adjustment::before { background: var(--status-info); }
+
+  .status-badge.pending {
+    background: var(--amber-dim);
+    color: var(--amber);
+  }
+  .status-badge.pending::before { background: var(--amber); }
+
+  .status-badge.approved {
+    background: rgba(63, 185, 80, 0.12);
+    color: var(--status-success);
+  }
+  .status-badge.approved::before { background: var(--status-success); }
+
+  /* Quantity bars */
+  .qty-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .qty-value {
+    font-family: var(--font-data);
+    font-size: 12px;
+    min-width: 32px;
+  }
+
+  .qty-value.critical { color: var(--status-danger); font-weight: 600; }
+  .qty-value.warning { color: var(--amber); }
+  .qty-value.normal { color: var(--text-secondary); }
+
+  .qty-bar {
+    flex: 1;
+    height: 4px;
+    background: var(--bg-input);
+    border-radius: 2px;
+    max-width: 60px;
+    overflow: hidden;
+  }
+
+  .qty-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+
+  .qty-bar-fill.critical { background: var(--status-danger); }
+  .qty-bar-fill.warning { background: var(--amber); }
+  .qty-bar-fill.normal { background: var(--accent-teal); }
+
+  /* === WAREHOUSE UTILIZATION === */
+  .warehouse-list {
+    padding: 4px 0;
+  }
+
+  .warehouse-item {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border-muted);
+    transition: background 0.1s;
+    cursor: pointer;
+  }
+
+  .warehouse-item:last-child { border-bottom: none; }
+  .warehouse-item:hover { background: var(--bg-elevated); }
+
+  .warehouse-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .warehouse-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .warehouse-capacity {
+    font-family: var(--font-data);
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .utilization-bar {
+    height: 6px;
+    background: var(--bg-input);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+
+  .utilization-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1s ease;
+  }
+
+  .utilization-fill.low { background: var(--status-success); }
+  .utilization-fill.mid { background: var(--amber); }
+  .utilization-fill.high { background: var(--status-danger); }
+
+  .warehouse-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: var(--font-data);
+  }
+
+  /* === ALERT BAR === */
+  .alert-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: rgba(248, 81, 73, 0.08);
+    border: 1px solid rgba(248, 81, 73, 0.2);
+    border-radius: var(--radius-md);
+    margin-bottom: 20px;
+    font-size: 13px;
+  }
+
+  .alert-bar-icon {
+    color: var(--status-danger);
+    flex-shrink: 0;
+  }
+
+  .alert-bar-text {
+    color: var(--text-secondary);
+  }
+
+  .alert-bar-text strong {
+    color: var(--status-danger);
+  }
+
+  .alert-bar-action {
+    margin-left: auto;
+    padding: 4px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(248, 81, 73, 0.3);
+    background: transparent;
+    color: var(--status-danger);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--font-ui);
+    white-space: nowrap;
+  }
+
+  /* === CHART PLACEHOLDER === */
+  .chart-area {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .chart-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 120px;
+    padding-top: 10px;
+  }
+
+  .chart-bar-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+
+  .chart-bar {
+    width: 100%;
+    max-width: 32px;
+    border-radius: 3px 3px 0 0;
+    transition: height 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .chart-bar.teal { background: var(--accent-teal); opacity: 0.8; }
+  .chart-bar.teal:hover { opacity: 1; }
+  .chart-bar.blue { background: var(--status-info); opacity: 0.6; }
+
+  .chart-bar-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: var(--font-data);
+  }
+
+  .chart-legend {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+  }
+
+  .chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  .chart-legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+  }
+
+  /* === ORDER STATUS PIPELINE === */
+  .pipeline {
+    padding: 20px;
+    display: flex;
+    gap: 12px;
+  }
+
+  .pipeline-stage {
+    flex: 1;
+    text-align: center;
+    padding: 16px 12px;
+    border-radius: var(--radius-md);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-muted);
+    transition: border-color 0.2s;
+    cursor: pointer;
+  }
+
+  .pipeline-stage:hover { border-color: var(--border-subtle); }
+
+  .pipeline-count {
+    font-family: var(--font-data);
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .pipeline-stage.pending .pipeline-count { color: var(--amber); }
+  .pipeline-stage.approved .pipeline-count { color: var(--status-info); }
+  .pipeline-stage.shipped .pipeline-count { color: var(--accent-teal); }
+  .pipeline-stage.received .pipeline-count { color: var(--status-success); }
+
+  .pipeline-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+
+  /* === ANIMATIONS === */
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .kpi-card { animation: slideUp 0.5s ease both; }
+  .kpi-card:nth-child(1) { animation-delay: 0.05s; }
+  .kpi-card:nth-child(2) { animation-delay: 0.1s; }
+  .kpi-card:nth-child(3) { animation-delay: 0.15s; }
+  .kpi-card:nth-child(4) { animation-delay: 0.2s; }
+
+  .card { animation: slideUp 0.5s ease both; animation-delay: 0.25s; }
+
+  .alert-bar { animation: slideUp 0.4s ease both; }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 1024px) {
+    .app-layout {
+      grid-template-columns: 1fr;
+    }
+    .sidebar {
+      display: none; /* collapsed on tablet, toggle with hamburger */
+    }
+    .kpi-row {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .content-grid {
+      grid-template-columns: 1fr;
+    }
+    .content-grid-full {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .kpi-row {
+      grid-template-columns: 1fr;
+    }
+    .main-content {
+      padding: 12px;
+    }
+    .pipeline {
+      flex-direction: column;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">LP</div>
+      <div class="brand-text">Logistics<span>Pulse</span></div>
+    </div>
+
+    <div class="tenant-switcher">
+      <div class="tenant-label">Organization</div>
+      <div class="tenant-name">
+        Maple Creek Warehouse
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title">Overview</div>
+      <a class="nav-item active" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Reports
+      </a>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title">Inventory</div>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        Items
+        <span class="nav-badge">3</span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/></svg>
+        Categories
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+        Warehouses
+      </a>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title">Procurement</div>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Suppliers
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+        Purchase Orders
+      </a>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+        Stock Movements
+      </a>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-group-title">Tools</div>
+      <a class="nav-item" href="#">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        CSV Import
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="system-status">
+        <div class="status-dot"></div>
+        API Connected &middot; 12ms
+      </div>
+    </div>
+  </aside>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-left">
+      <h1 class="page-title">Operations Dashboard</h1>
+      <div class="live-indicator">
+        <div class="live-dot"></div>
+        LIVE
+      </div>
+    </div>
+    <div class="header-right">
+      <input type="text" class="header-search" placeholder="Search items, SKUs, orders...">
+      <button class="header-btn" title="Notifications">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <div class="notif-dot"></div>
+      </button>
+      <button class="header-btn" title="Settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- ALERT BAR -->
+    <div class="alert-bar">
+      <svg class="alert-bar-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+      <div class="alert-bar-text">
+        <strong>3 items</strong> are below reorder threshold. Auto-PO generation is available.
+      </div>
+      <button class="alert-bar-action">Review Alerts</button>
+    </div>
+
+    <!-- KPI CARDS -->
+    <div class="kpi-row">
+      <div class="kpi-card teal">
+        <div class="kpi-header">
+          <div class="kpi-label">Total Items</div>
+          <div class="kpi-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          </div>
+        </div>
+        <div class="kpi-value">1,247</div>
+        <div class="kpi-trend up">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 15l7-7 7 7"/></svg>
+          +12.3% from last month
+        </div>
+      </div>
+
+      <div class="kpi-card blue">
+        <div class="kpi-header">
+          <div class="kpi-label">Inventory Value</div>
+          <div class="kpi-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+        </div>
+        <div class="kpi-value">$842,650</div>
+        <div class="kpi-trend up">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 15l7-7 7 7"/></svg>
+          +4.7% from last month
+        </div>
+      </div>
+
+      <div class="kpi-card amber">
+        <div class="kpi-header">
+          <div class="kpi-label">Low Stock Alerts</div>
+          <div class="kpi-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+          </div>
+        </div>
+        <div class="kpi-value">3</div>
+        <div class="kpi-trend down">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 9l-7 7-7-7"/></svg>
+          -2 from last week
+        </div>
+      </div>
+
+      <div class="kpi-card green">
+        <div class="kpi-header">
+          <div class="kpi-label">Order Fill Rate</div>
+          <div class="kpi-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+        </div>
+        <div class="kpi-value">96.2%</div>
+        <div class="kpi-trend up">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 15l7-7 7 7"/></svg>
+          +1.8% from last month
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN GRID: Recent Movements + Warehouse Util -->
+    <div class="content-grid">
+
+      <!-- Recent Stock Movements -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">
+            Recent Stock Movements
+            <span class="count">24h</span>
+          </div>
+          <div class="card-actions">
+            <button class="btn-ghost">View All</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Item</th>
+                <th>SKU</th>
+                <th>Type</th>
+                <th>Qty</th>
+                <th>Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="col-mono">14:32</td>
+                <td class="col-primary">Steel Bolts M10</td>
+                <td class="col-mono">STL-BLT-010</td>
+                <td><span class="status-badge in">IN</span></td>
+                <td class="col-mono">+500</td>
+                <td>PO-2024-0187 received</td>
+              </tr>
+              <tr>
+                <td class="col-mono">13:15</td>
+                <td class="col-primary">Copper Wire 2mm</td>
+                <td class="col-mono">CPR-WRE-002</td>
+                <td><span class="status-badge out">OUT</span></td>
+                <td class="col-mono">-120</td>
+                <td>Order fulfillment #4521</td>
+              </tr>
+              <tr>
+                <td class="col-mono">12:48</td>
+                <td class="col-primary">Packing Tape Clear</td>
+                <td class="col-mono">PKG-TPE-CLR</td>
+                <td><span class="status-badge adjustment">ADJ</span></td>
+                <td class="col-mono">-8</td>
+                <td>Cycle count variance</td>
+              </tr>
+              <tr>
+                <td class="col-mono">11:20</td>
+                <td class="col-primary">Rubber Gaskets 5cm</td>
+                <td class="col-mono">RBR-GSK-050</td>
+                <td><span class="status-badge in">IN</span></td>
+                <td class="col-mono">+200</td>
+                <td>Return from QA hold</td>
+              </tr>
+              <tr>
+                <td class="col-mono">10:55</td>
+                <td class="col-primary">LED Panel Light</td>
+                <td class="col-mono">LED-PNL-001</td>
+                <td><span class="status-badge out">OUT</span></td>
+                <td class="col-mono">-45</td>
+                <td>Warehouse B transfer</td>
+              </tr>
+              <tr>
+                <td class="col-mono">09:30</td>
+                <td class="col-primary">Nylon Zip Ties</td>
+                <td class="col-mono">NYL-ZPT-100</td>
+                <td><span class="status-badge in">IN</span></td>
+                <td class="col-mono">+1000</td>
+                <td>PO-2024-0185 received</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Warehouse Utilization -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Warehouse Utilization</div>
+          <div class="card-actions">
+            <button class="btn-ghost">Manage</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="warehouse-list">
+            <div class="warehouse-item">
+              <div class="warehouse-header">
+                <div class="warehouse-name">Warehouse A - Main</div>
+                <div class="warehouse-capacity">847 / 1,000</div>
+              </div>
+              <div class="utilization-bar">
+                <div class="utilization-fill mid" style="width: 84.7%"></div>
+              </div>
+              <div class="warehouse-meta">
+                <span>312 unique SKUs</span>
+                <span>84.7% utilized</span>
+              </div>
+            </div>
+            <div class="warehouse-item">
+              <div class="warehouse-header">
+                <div class="warehouse-name">Warehouse B - Overflow</div>
+                <div class="warehouse-capacity">245 / 500</div>
+              </div>
+              <div class="utilization-bar">
+                <div class="utilization-fill low" style="width: 49%"></div>
+              </div>
+              <div class="warehouse-meta">
+                <span>89 unique SKUs</span>
+                <span>49.0% utilized</span>
+              </div>
+            </div>
+            <div class="warehouse-item">
+              <div class="warehouse-header">
+                <div class="warehouse-name">Cold Storage Unit</div>
+                <div class="warehouse-capacity">178 / 200</div>
+              </div>
+              <div class="utilization-bar">
+                <div class="utilization-fill high" style="width: 89%"></div>
+              </div>
+              <div class="warehouse-meta">
+                <span>42 unique SKUs</span>
+                <span>89.0% utilized</span>
+              </div>
+            </div>
+            <div class="warehouse-item">
+              <div class="warehouse-header">
+                <div class="warehouse-name">Hazmat Bay</div>
+                <div class="warehouse-capacity">32 / 150</div>
+              </div>
+              <div class="utilization-bar">
+                <div class="utilization-fill low" style="width: 21.3%"></div>
+              </div>
+              <div class="warehouse-meta">
+                <span>18 unique SKUs</span>
+                <span>21.3% utilized</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM GRID: Inventory by Category chart + Purchase Order Pipeline -->
+    <div class="content-grid-full">
+
+      <!-- Category Valuation Chart -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Inventory Value by Category</div>
+          <div class="card-actions">
+            <button class="btn-ghost">This Quarter</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="chart-area">
+            <div class="chart-bars">
+              <div class="chart-bar-group">
+                <div class="chart-bar teal" style="height: 85%"></div>
+                <div class="chart-bar-label">Electronics</div>
+              </div>
+              <div class="chart-bar-group">
+                <div class="chart-bar teal" style="height: 62%"></div>
+                <div class="chart-bar-label">Hardware</div>
+              </div>
+              <div class="chart-bar-group">
+                <div class="chart-bar teal" style="height: 48%"></div>
+                <div class="chart-bar-label">Packaging</div>
+              </div>
+              <div class="chart-bar-group">
+                <div class="chart-bar teal" style="height: 35%"></div>
+                <div class="chart-bar-label">Raw Mat.</div>
+              </div>
+              <div class="chart-bar-group">
+                <div class="chart-bar teal" style="height: 28%"></div>
+                <div class="chart-bar-label">Safety</div>
+              </div>
+              <div class="chart-bar-group">
+                <div class="chart-bar teal" style="height: 100%"></div>
+                <div class="chart-bar-label">Fasteners</div>
+              </div>
+              <div class="chart-bar-group">
+                <div class="chart-bar teal" style="height: 18%"></div>
+                <div class="chart-bar-label">Lighting</div>
+              </div>
+              <div class="chart-bar-group">
+                <div class="chart-bar teal" style="height: 42%"></div>
+                <div class="chart-bar-label">Chemicals</div>
+              </div>
+            </div>
+            <div class="chart-legend">
+              <div class="chart-legend-item">
+                <div class="chart-legend-dot" style="background: var(--accent-teal)"></div>
+                Current Value
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Purchase Order Pipeline -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Purchase Order Pipeline</div>
+          <div class="card-actions">
+            <button class="btn-ghost">Create PO</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="pipeline">
+            <div class="pipeline-stage pending">
+              <div class="pipeline-count">7</div>
+              <div class="pipeline-label">Pending</div>
+            </div>
+            <div class="pipeline-stage approved">
+              <div class="pipeline-count">4</div>
+              <div class="pipeline-label">Approved</div>
+            </div>
+            <div class="pipeline-stage shipped">
+              <div class="pipeline-count">2</div>
+              <div class="pipeline-label">Shipped</div>
+            </div>
+            <div class="pipeline-stage received">
+              <div class="pipeline-count">12</div>
+              <div class="pipeline-label">Received</div>
+            </div>
+          </div>
+
+          <!-- Recent POs -->
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>PO Number</th>
+                <th>Supplier</th>
+                <th>Status</th>
+                <th>Total</th>
+                <th>ETA</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="col-mono col-primary">PO-2024-0192</td>
+                <td>Acme Industrial Supply</td>
+                <td><span class="status-badge pending">Pending</span></td>
+                <td class="col-mono">$4,250.00</td>
+                <td class="col-mono">Mar 15</td>
+              </tr>
+              <tr>
+                <td class="col-mono col-primary">PO-2024-0191</td>
+                <td>Pacific Metals Co.</td>
+                <td><span class="status-badge approved">Approved</span></td>
+                <td class="col-mono">$12,800.00</td>
+                <td class="col-mono">Mar 12</td>
+              </tr>
+              <tr>
+                <td class="col-mono col-primary">PO-2024-0190</td>
+                <td>Bright Star Lighting</td>
+                <td><span class="status-badge approved">Approved</span></td>
+                <td class="col-mono">$3,100.00</td>
+                <td class="col-mono">Mar 14</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,101 @@
+.feed {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  border-left: 2px solid transparent;
+  transition: background 0.15s;
+}
+
+.item:hover {
+  background: var(--bg-elevated);
+}
+
+.itemGreen {
+  border-left-color: var(--status-success);
+}
+
+.itemRed {
+  border-left-color: var(--status-danger);
+}
+
+.itemBlue {
+  border-left-color: var(--status-info);
+}
+
+.itemTeal {
+  border-left-color: var(--accent-teal);
+}
+
+.iconCircle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.iconGreen {
+  background: rgba(63, 185, 80, 0.12);
+  color: var(--status-success);
+}
+
+.iconRed {
+  background: rgba(248, 81, 73, 0.12);
+  color: var(--status-danger);
+}
+
+.iconBlue {
+  background: rgba(88, 166, 255, 0.12);
+  color: var(--status-info);
+}
+
+.iconTeal {
+  background: var(--accent-teal-dim);
+  color: var(--accent-teal);
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.detail {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timestamp {
+  font-size: 11px;
+  font-family: var(--font-data);
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+  font-size: 13px;
+}

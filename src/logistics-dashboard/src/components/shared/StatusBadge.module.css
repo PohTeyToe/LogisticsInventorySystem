@@ -1,0 +1,52 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-data);
+  white-space: nowrap;
+}
+
+.badge::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.in, .success, .approved, .received {
+  background: rgba(63, 185, 80, 0.12);
+  color: var(--status-success);
+}
+.in::before, .success::before, .approved::before, .received::before {
+  background: var(--status-success);
+}
+
+.out, .danger, .cancelled {
+  background: rgba(248, 81, 73, 0.12);
+  color: var(--status-danger);
+}
+.out::before, .danger::before, .cancelled::before {
+  background: var(--status-danger);
+}
+
+.adjustment {
+  background: rgba(88, 166, 255, 0.12);
+  color: var(--status-info);
+}
+.adjustment::before { background: var(--status-info); }
+
+.pending, .warning {
+  background: var(--amber-dim);
+  color: var(--amber);
+}
+.pending::before, .warning::before { background: var(--amber); }
+
+.shipped {
+  background: var(--accent-teal-dim);
+  color: var(--accent-teal);
+}
+.shipped::before { background: var(--accent-teal); }

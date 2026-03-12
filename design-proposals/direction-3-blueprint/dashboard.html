@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StockOS — Industrial Blueprint</title>
+
+<!--
+  DIRECTION 3: "INDUSTRIAL BLUEPRINT"
+  Aesthetic: Technical drawing meets modern UI. Think engineering blueprints digitized.
+  Tone: Utilitarian, precise, data-forward. Feels like a tool built BY warehouse people
+        FOR warehouse people. No fluff.
+  Font: "IBM Plex Mono" for everything data, "IBM Plex Sans" for UI. IBM's type family
+        was literally designed for industrial/technical contexts.
+  Color: Dusty navy base (#1B2838), blueprint-cyan accent (#4FC3F7), chalk-white text.
+         Warm paper tones for light panels (#F4F1EC). The trick: most of the UI is LIGHT,
+         but the sidebar and header are dark. Creates strong contrast hierarchy.
+  Signature: Dashed borders (like dimension lines on a blueprint), uppercase micro-labels,
+             tabular data grids with tight spacing, utilitarian but refined.
+  Target: Warehouse floor tablets and desktop stations.
+-->
+
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    /* Dark chrome */
+    --chrome: #1B2838;
+    --chrome-light: #243447;
+    --chrome-lighter: #2D4159;
+    --chrome-border: #3A5068;
+
+    /* Light content area */
+    --paper: #F4F1EC;
+    --paper-white: #FFFFFF;
+    --paper-muted: #EBE7E0;
+    --paper-border: #D6D0C5;
+
+    /* Text */
+    --ink: #1B2838;
+    --ink-medium: #5A6B7D;
+    --ink-light: #8A97A6;
+    --ink-faint: #B0BAC5;
+    --chrome-text: #CBD5E1;
+    --chrome-text-dim: #7A8FA3;
+
+    /* Accents */
+    --cyan: #4FC3F7;
+    --cyan-dim: rgba(79, 195, 247, 0.15);
+    --cyan-dark: #0288D1;
+    --red: #E74C3C;
+    --red-bg: #FEF0EE;
+    --green: #27AE60;
+    --green-bg: #EEF7F1;
+    --orange: #E67E22;
+    --orange-bg: #FEF5EC;
+    --blue: #3498DB;
+    --blue-bg: #EEF5FB;
+
+    --font-mono: 'IBM Plex Mono', 'Consolas', monospace;
+    --font-sans: 'IBM Plex Sans', -apple-system, sans-serif;
+
+    --sidebar-w: 56px;     /* collapsed by default */
+    --sidebar-w-open: 240px;
+    --topbar-h: 48px;
+
+    --radius: 4px;
+  }
+
+  html { font-size: 13px; }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* === LAYOUT === */
+  .shell {
+    display: grid;
+    grid-template-columns: var(--sidebar-w) 1fr;
+    grid-template-rows: var(--topbar-h) 1fr;
+    min-height: 100vh;
+  }
+
+  /* === SIDEBAR (icon-rail by default) === */
+  .rail {
+    grid-row: 1 / -1;
+    background: var(--chrome);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0;
+    border-right: 1px solid var(--chrome-border);
+    z-index: 20;
+    width: var(--sidebar-w);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    transition: width 0.2s;
+    overflow: hidden;
+  }
+
+  .rail:hover {
+    width: var(--sidebar-w-open);
+  }
+
+  .rail-brand {
+    width: 40px;
+    height: 40px;
+    background: var(--cyan);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+
+  .rail-brand svg { color: var(--chrome); }
+
+  .rail-tenant {
+    width: calc(var(--sidebar-w) - 16px);
+    min-width: 40px;
+    padding: 6px;
+    margin: 4px 0 8px;
+    background: var(--chrome-light);
+    border: 1px dashed var(--chrome-border);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: width 0.2s;
+  }
+
+  .rail:hover .rail-tenant { width: calc(var(--sidebar-w-open) - 16px); }
+
+  .rail-tenant-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius);
+    background: var(--chrome-lighter);
+    border: 1px solid var(--chrome-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--cyan);
+    flex-shrink: 0;
+  }
+
+  .rail-tenant-text {
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .rail:hover .rail-tenant-text { opacity: 1; }
+
+  .rail-tenant-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--chrome-text);
+  }
+
+  .rail-tenant-id {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--chrome-text-dim);
+  }
+
+  .rail-divider {
+    width: 24px;
+    height: 1px;
+    background: var(--chrome-border);
+    margin: 6px 0;
+  }
+
+  .rail-item {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--chrome-text-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    flex-shrink: 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .rail:hover .rail-item {
+    width: calc(var(--sidebar-w-open) - 16px);
+    justify-content: flex-start;
+    padding-left: 10px;
+  }
+
+  .rail-item:hover { background: var(--chrome-light); color: var(--chrome-text); }
+
+  .rail-item.active {
+    background: var(--cyan-dim);
+    color: var(--cyan);
+  }
+
+  .rail-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: var(--cyan);
+    border-radius: 0 2px 2px 0;
+  }
+
+  .rail-item svg {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+  }
+
+  .rail-item-label {
+    font-size: 12px;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .rail:hover .rail-item-label { opacity: 1; }
+
+  .rail-item .rail-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--red);
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .rail:hover .rail-item .rail-badge {
+    position: static;
+    margin-left: auto;
+    margin-right: 4px;
+    border-radius: 8px;
+    width: auto;
+    padding: 0 6px;
+  }
+
+  .rail-section-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--chrome-text-dim);
+    margin: 12px 0 4px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+    align-self: flex-start;
+    padding-left: 12px;
+  }
+
+  .rail:hover .rail-section-label { opacity: 1; }
+
+  .rail-bottom {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding: 0 8px;
+  }
+
+  .rail-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--chrome-text-dim);
+    padding: 8px 0;
+    white-space: nowrap;
+  }
+
+  .rail-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    flex-shrink: 0;
+  }
+
+  .rail-status-text {
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .rail:hover .rail-status-text { opacity: 1; }
+
+  /* === TOPBAR === */
+  .topbar {
+    background: var(--chrome);
+    border-bottom: 1px solid var(--chrome-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    height: var(--topbar-h);
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .topbar-breadcrumb {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--chrome-text-dim);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .topbar-breadcrumb span { color: var(--chrome-text); font-weight: 600; }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .topbar-input {
+    background: var(--chrome-light);
+    border: 1px solid var(--chrome-border);
+    border-radius: var(--radius);
+    padding: 5px 10px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--chrome-text);
+    width: 200px;
+    outline: none;
+  }
+
+  .topbar-input::placeholder { color: var(--chrome-text-dim); }
+  .topbar-input:focus { border-color: var(--cyan); }
+
+  .topbar-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius);
+    border: 1px solid var(--chrome-border);
+    background: transparent;
+    color: var(--chrome-text-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .topbar-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+
+  /* === MAIN CONTENT === */
+  .content {
+    padding: 16px 20px;
+    overflow-y: auto;
+  }
+
+  /* === SECTION LABEL === */
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--ink-light);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    border-top: 1px dashed var(--paper-border);
+  }
+
+  /* === KPI STRIP === */
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .kpi-tile {
+    background: var(--paper-white);
+    border: 1px solid var(--paper-border);
+    border-radius: var(--radius);
+    padding: 16px;
+    position: relative;
+  }
+
+  .kpi-tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+
+  .kpi-tile.cyan::before { background: var(--cyan); }
+  .kpi-tile.green::before { background: var(--green); }
+  .kpi-tile.orange::before { background: var(--orange); }
+  .kpi-tile.red::before { background: var(--red); }
+  .kpi-tile.blue::before { background: var(--blue); }
+
+  .kpi-tile-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--ink-light);
+    margin-bottom: 8px;
+  }
+
+  .kpi-tile-value {
+    font-family: var(--font-mono);
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+
+  .kpi-tile-delta {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .kpi-tile-delta.up { color: var(--green); }
+  .kpi-tile-delta.down { color: var(--red); }
+  .kpi-tile-delta.flat { color: var(--ink-light); }
+
+  /* === GRID LAYOUTS === */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .grid-3-2 {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  /* === BOX (card equivalent) === */
+  .box {
+    background: var(--paper-white);
+    border: 1px solid var(--paper-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .box-head {
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px dashed var(--paper-border);
+    background: var(--paper);
+  }
+
+  .box-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .box-title-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  .box-title-dot.live { background: var(--green); animation: blink 2s infinite; }
+  .box-title-dot.static { background: var(--ink-light); }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .box-head-actions {
+    display: flex;
+    gap: 4px;
+  }
+
+  .btn-sm {
+    padding: 3px 8px;
+    border-radius: var(--radius);
+    border: 1px solid var(--paper-border);
+    background: var(--paper-white);
+    color: var(--ink-medium);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-sm:hover {
+    border-color: var(--cyan-dark);
+    color: var(--cyan-dark);
+  }
+
+  /* === DENSE TABLE === */
+  .dtable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  .dtable thead th {
+    padding: 8px 12px;
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--ink-light);
+    background: var(--paper);
+    border-bottom: 1px solid var(--paper-border);
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+  }
+
+  .dtable thead th.sortable {
+    cursor: pointer;
+  }
+
+  .dtable thead th.sortable:hover { color: var(--ink); }
+
+  .dtable tbody tr {
+    border-bottom: 1px solid var(--paper-muted);
+    transition: background 0.1s;
+  }
+
+  .dtable tbody tr:last-child { border-bottom: none; }
+  .dtable tbody tr:hover { background: var(--paper); }
+
+  .dtable td {
+    padding: 8px 12px;
+    white-space: nowrap;
+    color: var(--ink-medium);
+  }
+
+  .dtable .mono {
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+
+  .dtable .bold {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* Tags */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid;
+  }
+
+  .tag.in { background: var(--green-bg); color: var(--green); border-color: #C3E6CD; }
+  .tag.out { background: var(--red-bg); color: var(--red); border-color: #F5CCCC; }
+  .tag.adj { background: var(--blue-bg); color: var(--blue); border-color: #BDD8EB; }
+  .tag.pending { background: var(--orange-bg); color: var(--orange); border-color: #F0D4B3; }
+  .tag.approved { background: var(--green-bg); color: var(--green); border-color: #C3E6CD; }
+  .tag.received { background: var(--blue-bg); color: var(--blue); border-color: #BDD8EB; }
+
+  /* === WAREHOUSE GRID === */
+  .wh-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--paper-border);
+  }
+
+  .wh-cell {
+    background: var(--paper-white);
+    padding: 14px;
+    transition: background 0.1s;
+    cursor: pointer;
+  }
+
+  .wh-cell:hover { background: var(--paper); }
+
+  .wh-cell-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .wh-cell-name {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .wh-cell-pct {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .wh-cell-pct.low { color: var(--green); }
+  .wh-cell-pct.mid { color: var(--orange); }
+  .wh-cell-pct.high { color: var(--red); }
+
+  .wh-bar {
+    height: 4px;
+    background: var(--paper-muted);
+    border-radius: 1px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .wh-bar-fill {
+    height: 100%;
+    border-radius: 1px;
+  }
+
+  .wh-bar-fill.low { background: var(--green); }
+  .wh-bar-fill.mid { background: var(--orange); }
+  .wh-bar-fill.high { background: var(--red); }
+
+  .wh-cell-meta {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--ink-light);
+  }
+
+  /* === PO PIPELINE === */
+  .pipeline-track {
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  .pipeline-node {
+    flex: 1;
+    text-align: center;
+    padding: 12px 8px;
+    position: relative;
+  }
+
+  .pipeline-node::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -1px;
+    width: 30%;
+    border-top: 1px dashed var(--paper-border);
+    transform: translateY(-6px);
+  }
+
+  .pipeline-node:last-child::after { display: none; }
+
+  .pipeline-node-count {
+    font-family: var(--font-mono);
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .pipeline-node.n1 .pipeline-node-count { color: var(--orange); }
+  .pipeline-node.n2 .pipeline-node-count { color: var(--blue); }
+  .pipeline-node.n3 .pipeline-node-count { color: var(--cyan-dark); }
+  .pipeline-node.n4 .pipeline-node-count { color: var(--green); }
+
+  .pipeline-node-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--ink-light);
+  }
+
+  /* === ALERT STRIP === */
+  .alert-strip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--red-bg);
+    border: 1px solid #F5CCCC;
+    border-left: 3px solid var(--red);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    margin-bottom: 16px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--red);
+  }
+
+  .alert-strip svg { flex-shrink: 0; }
+
+  .alert-strip-text {
+    color: var(--ink-medium);
+  }
+
+  .alert-strip-text strong {
+    color: var(--red);
+    font-weight: 700;
+  }
+
+  .alert-strip-action {
+    margin-left: auto;
+    padding: 3px 10px;
+    border: 1px solid #F5CCCC;
+    border-radius: var(--radius);
+    background: var(--paper-white);
+    color: var(--red);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  /* === ANIMATIONS === */
+  @keyframes reveal {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .kpi-tile { animation: reveal 0.35s ease both; }
+  .kpi-tile:nth-child(1) { animation-delay: 0.02s; }
+  .kpi-tile:nth-child(2) { animation-delay: 0.06s; }
+  .kpi-tile:nth-child(3) { animation-delay: 0.10s; }
+  .kpi-tile:nth-child(4) { animation-delay: 0.14s; }
+  .kpi-tile:nth-child(5) { animation-delay: 0.18s; }
+
+  .box { animation: reveal 0.4s ease both; animation-delay: 0.2s; }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 1024px) {
+    .shell { grid-template-columns: 1fr; }
+    .rail { display: none; }
+    .kpi-strip { grid-template-columns: repeat(3, 1fr); }
+    .grid-3-2 { grid-template-columns: 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    .kpi-strip { grid-template-columns: 1fr 1fr; }
+    .wh-grid { grid-template-columns: 1fr; }
+    .pipeline-track { flex-direction: column; gap: 8px; }
+    .pipeline-node::after { display: none; }
+    .content { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ICON RAIL SIDEBAR -->
+  <nav class="rail">
+    <div class="rail-brand">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+    </div>
+
+    <div class="rail-tenant">
+      <div class="rail-tenant-avatar">MC</div>
+      <div class="rail-tenant-text">
+        <div class="rail-tenant-name">Maple Creek</div>
+        <div class="rail-tenant-id">TEN-0042</div>
+      </div>
+    </div>
+
+    <div class="rail-divider"></div>
+
+    <div class="rail-section-label">Core</div>
+
+    <a class="rail-item active" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span class="rail-item-label">Dashboard</span>
+    </a>
+
+    <a class="rail-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      <span class="rail-item-label">Inventory</span>
+      <span class="rail-badge">3</span>
+    </a>
+
+    <a class="rail-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/></svg>
+      <span class="rail-item-label">Categories</span>
+    </a>
+
+    <a class="rail-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+      <span class="rail-item-label">Warehouses</span>
+    </a>
+
+    <div class="rail-section-label">Supply</div>
+
+    <a class="rail-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      <span class="rail-item-label">Suppliers</span>
+    </a>
+
+    <a class="rail-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      <span class="rail-item-label">Purchase Orders</span>
+    </a>
+
+    <a class="rail-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+      <span class="rail-item-label">Movements</span>
+    </a>
+
+    <div class="rail-section-label">Tools</div>
+
+    <a class="rail-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span class="rail-item-label">CSV Import</span>
+    </a>
+
+    <a class="rail-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      <span class="rail-item-label">Reports</span>
+    </a>
+
+    <div class="rail-bottom">
+      <div class="rail-divider"></div>
+      <div class="rail-status">
+        <div class="rail-status-dot"></div>
+        <span class="rail-status-text">API: 12ms</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-breadcrumb">
+        STOCK_OS / <span>DASHBOARD</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <input type="text" class="topbar-input" placeholder="/ search...">
+      <button class="topbar-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      </button>
+      <button class="topbar-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <main class="content">
+
+    <!-- ALERT -->
+    <div class="alert-strip">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+      <div class="alert-strip-text">
+        <strong>3 SKUs</strong> below reorder threshold &mdash; auto-PO available
+      </div>
+      <button class="alert-strip-action">Review</button>
+    </div>
+
+    <!-- KPI STRIP -->
+    <div class="section-label">Key Metrics</div>
+    <div class="kpi-strip">
+      <div class="kpi-tile cyan">
+        <div class="kpi-tile-label">Total SKUs</div>
+        <div class="kpi-tile-value">1,247</div>
+        <div class="kpi-tile-delta up">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 15l7-7 7 7"/></svg>
+          +12.3%
+        </div>
+      </div>
+      <div class="kpi-tile green">
+        <div class="kpi-tile-label">Total Value</div>
+        <div class="kpi-tile-value">$842K</div>
+        <div class="kpi-tile-delta up">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 15l7-7 7 7"/></svg>
+          +4.7%
+        </div>
+      </div>
+      <div class="kpi-tile red">
+        <div class="kpi-tile-label">Low Stock</div>
+        <div class="kpi-tile-value">3</div>
+        <div class="kpi-tile-delta down">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M19 9l-7 7-7-7"/></svg>
+          -2 this week
+        </div>
+      </div>
+      <div class="kpi-tile orange">
+        <div class="kpi-tile-label">Pending POs</div>
+        <div class="kpi-tile-value">7</div>
+        <div class="kpi-tile-delta up">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 15l7-7 7 7"/></svg>
+          +3 new
+        </div>
+      </div>
+      <div class="kpi-tile blue">
+        <div class="kpi-tile-label">Fill Rate</div>
+        <div class="kpi-tile-value">96.2%</div>
+        <div class="kpi-tile-delta up">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 15l7-7 7 7"/></svg>
+          +1.8%
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 1: Movements + Warehouses -->
+    <div class="section-label">Activity &amp; Capacity</div>
+    <div class="grid-3-2">
+
+      <!-- Movements Table -->
+      <div class="box">
+        <div class="box-head">
+          <div class="box-title">
+            <div class="box-title-dot live"></div>
+            Stock Movements (24h)
+          </div>
+          <div class="box-head-actions">
+            <button class="btn-sm">Export</button>
+            <button class="btn-sm">View All</button>
+          </div>
+        </div>
+        <table class="dtable">
+          <thead>
+            <tr>
+              <th class="sortable">Time</th>
+              <th>SKU</th>
+              <th class="sortable">Item</th>
+              <th>Type</th>
+              <th class="sortable">Qty</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="mono">14:32</td>
+              <td class="mono">STL-BLT-010</td>
+              <td class="bold">Steel Bolts M10</td>
+              <td><span class="tag in">IN</span></td>
+              <td class="mono bold">+500</td>
+              <td>PO-2024-0187</td>
+            </tr>
+            <tr>
+              <td class="mono">13:15</td>
+              <td class="mono">CPR-WRE-002</td>
+              <td class="bold">Copper Wire 2mm</td>
+              <td><span class="tag out">OUT</span></td>
+              <td class="mono bold">-120</td>
+              <td>Order #4521</td>
+            </tr>
+            <tr>
+              <td class="mono">12:48</td>
+              <td class="mono">PKG-TPE-CLR</td>
+              <td class="bold">Packing Tape Clear</td>
+              <td><span class="tag adj">ADJ</span></td>
+              <td class="mono bold">-8</td>
+              <td>Cycle count</td>
+            </tr>
+            <tr>
+              <td class="mono">11:20</td>
+              <td class="mono">RBR-GSK-050</td>
+              <td class="bold">Rubber Gaskets 5cm</td>
+              <td><span class="tag in">IN</span></td>
+              <td class="mono bold">+200</td>
+              <td>QA release</td>
+            </tr>
+            <tr>
+              <td class="mono">10:55</td>
+              <td class="mono">LED-PNL-001</td>
+              <td class="bold">LED Panel Light</td>
+              <td><span class="tag out">OUT</span></td>
+              <td class="mono bold">-45</td>
+              <td>WH-B transfer</td>
+            </tr>
+            <tr>
+              <td class="mono">09:30</td>
+              <td class="mono">NYL-ZPT-100</td>
+              <td class="bold">Nylon Zip Ties</td>
+              <td><span class="tag in">IN</span></td>
+              <td class="mono bold">+1000</td>
+              <td>PO-2024-0185</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Warehouse Grid -->
+      <div class="box">
+        <div class="box-head">
+          <div class="box-title">
+            <div class="box-title-dot static"></div>
+            Warehouse Utilization
+          </div>
+          <div class="box-head-actions">
+            <button class="btn-sm">Manage</button>
+          </div>
+        </div>
+        <div class="wh-grid">
+          <div class="wh-cell">
+            <div class="wh-cell-header">
+              <div class="wh-cell-name">WH-A Main</div>
+              <div class="wh-cell-pct mid">84.7%</div>
+            </div>
+            <div class="wh-bar">
+              <div class="wh-bar-fill mid" style="width: 84.7%"></div>
+            </div>
+            <div class="wh-cell-meta">
+              <span>312 SKUs</span>
+              <span>847 / 1,000</span>
+            </div>
+          </div>
+          <div class="wh-cell">
+            <div class="wh-cell-header">
+              <div class="wh-cell-name">WH-B Overflow</div>
+              <div class="wh-cell-pct low">49.0%</div>
+            </div>
+            <div class="wh-bar">
+              <div class="wh-bar-fill low" style="width: 49%"></div>
+            </div>
+            <div class="wh-cell-meta">
+              <span>89 SKUs</span>
+              <span>245 / 500</span>
+            </div>
+          </div>
+          <div class="wh-cell">
+            <div class="wh-cell-header">
+              <div class="wh-cell-name">Cold Storage</div>
+              <div class="wh-cell-pct high">89.0%</div>
+            </div>
+            <div class="wh-bar">
+              <div class="wh-bar-fill high" style="width: 89%"></div>
+            </div>
+            <div class="wh-cell-meta">
+              <span>42 SKUs</span>
+              <span>178 / 200</span>
+            </div>
+          </div>
+          <div class="wh-cell">
+            <div class="wh-cell-header">
+              <div class="wh-cell-name">Hazmat Bay</div>
+              <div class="wh-cell-pct low">21.3%</div>
+            </div>
+            <div class="wh-bar">
+              <div class="wh-bar-fill low" style="width: 21.3%"></div>
+            </div>
+            <div class="wh-cell-meta">
+              <span>18 SKUs</span>
+              <span>32 / 150</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 2: PO Pipeline + Low Stock -->
+    <div class="section-label">Orders &amp; Alerts</div>
+    <div class="grid-2">
+
+      <!-- PO Pipeline -->
+      <div class="box">
+        <div class="box-head">
+          <div class="box-title">
+            <div class="box-title-dot static"></div>
+            Purchase Order Pipeline
+          </div>
+          <div class="box-head-actions">
+            <button class="btn-sm">New PO</button>
+          </div>
+        </div>
+        <div class="pipeline-track">
+          <div class="pipeline-node n1">
+            <div class="pipeline-node-count">7</div>
+            <div class="pipeline-node-label">Pending</div>
+          </div>
+          <div class="pipeline-node n2">
+            <div class="pipeline-node-count">4</div>
+            <div class="pipeline-node-label">Approved</div>
+          </div>
+          <div class="pipeline-node n3">
+            <div class="pipeline-node-count">2</div>
+            <div class="pipeline-node-label">In Transit</div>
+          </div>
+          <div class="pipeline-node n4">
+            <div class="pipeline-node-count">12</div>
+            <div class="pipeline-node-label">Received</div>
+          </div>
+        </div>
+        <table class="dtable">
+          <thead>
+            <tr>
+              <th>PO #</th>
+              <th>Supplier</th>
+              <th>Status</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="mono bold">PO-0192</td>
+              <td>Acme Industrial</td>
+              <td><span class="tag pending">Pending</span></td>
+              <td class="mono">$4,250</td>
+            </tr>
+            <tr>
+              <td class="mono bold">PO-0191</td>
+              <td>Pacific Metals</td>
+              <td><span class="tag approved">Approved</span></td>
+              <td class="mono">$12,800</td>
+            </tr>
+            <tr>
+              <td class="mono bold">PO-0190</td>
+              <td>Bright Star</td>
+              <td><span class="tag received">Received</span></td>
+              <td class="mono">$3,100</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Low Stock -->
+      <div class="box">
+        <div class="box-head">
+          <div class="box-title">
+            <div class="box-title-dot" style="background: var(--red);"></div>
+            Low Stock Alerts
+          </div>
+          <div class="box-head-actions">
+            <button class="btn-sm">Auto-PO</button>
+          </div>
+        </div>
+        <table class="dtable">
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Item</th>
+              <th>Current</th>
+              <th>Reorder</th>
+              <th>Warehouse</th>
+              <th>Severity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="mono">CPR-WRE-002</td>
+              <td class="bold">Copper Wire 2mm</td>
+              <td class="mono bold" style="color: var(--red);">3</td>
+              <td class="mono">50</td>
+              <td>WH-A</td>
+              <td><span class="tag out">Critical</span></td>
+            </tr>
+            <tr>
+              <td class="mono">SFT-GGL-PRO</td>
+              <td class="bold">Safety Goggles Pro</td>
+              <td class="mono bold" style="color: var(--red);">5</td>
+              <td class="mono">25</td>
+              <td>WH-B</td>
+              <td><span class="tag out">Critical</span></td>
+            </tr>
+            <tr>
+              <td class="mono">PKG-TPE-CLR</td>
+              <td class="bold">Packing Tape Clear</td>
+              <td class="mono bold" style="color: var(--orange);">12</td>
+              <td class="mono">20</td>
+              <td>WH-A</td>
+              <td><span class="tag pending">Warning</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>

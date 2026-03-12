@@ -1,0 +1,390 @@
+.content {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Sections inside cards */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+}
+
+/* Segmented control (radio-style) */
+.segmented {
+  display: flex;
+  background: var(--bg-input);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  gap: 2px;
+}
+
+.segBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.segBtn:hover {
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+}
+
+.segActive {
+  background: var(--accent-teal) !important;
+  color: #0D1117 !important;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 212, 170, 0.3);
+}
+
+/* Toggle switch */
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-muted);
+}
+
+.toggleRow:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.toggleRow:first-child {
+  padding-top: 0;
+}
+
+.toggleInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.toggleLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.toggleDesc {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.toggle {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  border: none;
+  background: var(--bg-input);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+  padding: 0;
+}
+
+.toggle::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 11px;
+  border: 1px solid var(--border-subtle);
+  pointer-events: none;
+  transition: border-color 0.2s;
+}
+
+.toggleOn {
+  background: var(--accent-teal);
+}
+
+.toggleOn::before {
+  border-color: var(--accent-teal);
+}
+
+.toggleKnob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.toggleOn .toggleKnob {
+  transform: translateX(18px);
+}
+
+/* Config rows (API section) */
+.configRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-muted);
+  gap: 12px;
+}
+
+.configRow:last-child {
+  border-bottom: none;
+}
+
+.configLabel {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.configValue {
+  font-family: var(--font-data);
+  font-size: 12px;
+  color: var(--text-primary);
+  text-align: right;
+  word-break: break-all;
+}
+
+.statusWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.statusChecking {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.retryBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.retryBtn:hover {
+  color: var(--text-primary);
+  border-color: var(--accent-teal);
+}
+
+/* Theme preview card */
+.preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.previewCard {
+  width: 100%;
+  max-width: 280px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+}
+
+.previewCard[data-preview="dark"] {
+  background: #0D1117;
+}
+
+.previewCard[data-preview="dark"] .previewSidebar {
+  background: #161B22;
+}
+
+.previewCard[data-preview="dark"] .previewMain {
+  background: #0D1117;
+}
+
+.previewCard[data-preview="dark"] .previewLine {
+  background: #30363D;
+}
+
+.previewCard[data-preview="dark"] .previewKpi {
+  background: #161B22;
+  border-color: #30363D;
+}
+
+.previewCard[data-preview="light"] {
+  background: #F6F8FA;
+}
+
+.previewCard[data-preview="light"] .previewSidebar {
+  background: #FFFFFF;
+}
+
+.previewCard[data-preview="light"] .previewMain {
+  background: #F6F8FA;
+}
+
+.previewCard[data-preview="light"] .previewLine {
+  background: #D0D7DE;
+}
+
+.previewCard[data-preview="light"] .previewKpi {
+  background: #FFFFFF;
+  border-color: #D0D7DE;
+}
+
+.previewHeader {
+  display: flex;
+  gap: 5px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-muted);
+}
+
+.previewDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.previewBody {
+  display: flex;
+  height: 80px;
+}
+
+.previewSidebar {
+  width: 60px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border-right: 1px solid var(--border-muted);
+}
+
+.previewMain {
+  flex: 1;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.previewLine {
+  height: 4px;
+  border-radius: 2px;
+}
+
+.previewKpis {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.previewKpi {
+  flex: 1;
+  border-radius: 3px;
+  border: 1px solid;
+}
+
+.previewLabel {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* About section */
+.aboutGrid {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.aboutIcon {
+  color: var(--accent-teal);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.aboutTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.aboutMeta {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .content {
+    padding: 12px;
+  }
+
+  .segmented {
+    flex-wrap: wrap;
+  }
+
+  .segBtn {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+
+  .aboutGrid {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+}
