@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
+using LogisticsAPI.Models;
 
 namespace LogisticsAPI.DTOs
 {
@@ -45,7 +46,7 @@ namespace LogisticsAPI.DTOs
         public DateTime OrderDate { get; set; }
 
         [DataMember]
-        public string Status { get; set; } = string.Empty;
+        public PurchaseOrderStatus Status { get; set; }
 
         [DataMember]
         public decimal TotalAmount { get; set; }
@@ -81,6 +82,6 @@ namespace LogisticsAPI.DTOs
     {
         [Required]
         [DataMember]
-        public string Status { get; set; } = string.Empty;
+        public PurchaseOrderStatus Status { get; set; }
     }
 }

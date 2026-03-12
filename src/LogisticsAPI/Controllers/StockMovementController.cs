@@ -1,5 +1,6 @@
 using LogisticsAPI.DTOs;
 using LogisticsAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LogisticsAPI.Controllers
@@ -7,6 +8,7 @@ namespace LogisticsAPI.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Produces("application/json", "application/xml")]
+    [Authorize]
     public class StockMovementController : ControllerBase
     {
         private readonly IStockMovementService _stockMovementService;
@@ -53,6 +55,28 @@ namespace LogisticsAPI.Controllers
         {
             var movements = await _stockMovementService.GetItemHistoryAsync(itemId);
             return Ok(movements);
+        }
+
+        [HttpPost("transfer")]
+        public async Task<ActionResult<StockTransferResponse>> TransferStock(
+            [FromBody] StockTransferRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var result = await _stockMovementService.TransferStockAsync(request);
+                return Ok(result);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

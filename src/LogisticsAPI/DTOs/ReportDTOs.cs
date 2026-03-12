@@ -66,6 +66,9 @@ namespace LogisticsAPI.DTOs
         public int ReorderLevel { get; set; }
 
         [DataMember]
+        public string? CategoryName { get; set; }
+
+        [DataMember]
         public string? WarehouseName { get; set; }
     }
 }

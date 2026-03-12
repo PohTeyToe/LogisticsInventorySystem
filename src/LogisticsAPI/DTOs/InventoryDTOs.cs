@@ -41,6 +41,29 @@ namespace LogisticsAPI.DTOs
         [Range(0, int.MaxValue)]
         [DataMember]
         public int ReorderLevel { get; set; } = 10;
+
+        [StringLength(100)]
+        [DataMember]
+        public string? LotNumber { get; set; }
+
+        [StringLength(100)]
+        [DataMember]
+        public string? SerialNumber { get; set; }
+
+        [DataMember]
+        public DateTime? ExpiryDate { get; set; }
+
+        [StringLength(20)]
+        [DataMember]
+        public string? UnitOfMeasure { get; set; } = "EA";
+
+        [StringLength(50)]
+        [DataMember]
+        public string? WarehouseZone { get; set; }
+
+        [StringLength(10)]
+        [DataMember]
+        public string? CurrencyCode { get; set; } = "USD";
     }
 
     [DataContract]
@@ -75,6 +98,29 @@ namespace LogisticsAPI.DTOs
         [Range(0, int.MaxValue)]
         [DataMember]
         public int? ReorderLevel { get; set; }
+
+        [StringLength(100)]
+        [DataMember]
+        public string? LotNumber { get; set; }
+
+        [StringLength(100)]
+        [DataMember]
+        public string? SerialNumber { get; set; }
+
+        [DataMember]
+        public DateTime? ExpiryDate { get; set; }
+
+        [StringLength(20)]
+        [DataMember]
+        public string? UnitOfMeasure { get; set; }
+
+        [StringLength(50)]
+        [DataMember]
+        public string? WarehouseZone { get; set; }
+
+        [StringLength(10)]
+        [DataMember]
+        public string? CurrencyCode { get; set; }
     }
 
     [DataContract]
@@ -118,6 +164,24 @@ namespace LogisticsAPI.DTOs
 
         [DataMember]
         public DateTime UpdatedAt { get; set; }
+
+        [DataMember]
+        public string? LotNumber { get; set; }
+
+        [DataMember]
+        public string? SerialNumber { get; set; }
+
+        [DataMember]
+        public DateTime? ExpiryDate { get; set; }
+
+        [DataMember]
+        public string? UnitOfMeasure { get; set; }
+
+        [DataMember]
+        public string? WarehouseZone { get; set; }
+
+        [DataMember]
+        public string? CurrencyCode { get; set; }
     }
 
     [DataContract]

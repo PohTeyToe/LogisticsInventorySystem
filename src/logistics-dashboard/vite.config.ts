@@ -21,6 +21,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: true,
       },
+      '/hubs': {
+        target: 'https://logistics-inventory-api-abdallah.azurewebsites.net',
+        changeOrigin: true,
+        secure: true,
+        ws: true,
+      },
     },
   },
 })

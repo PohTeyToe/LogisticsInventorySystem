@@ -1,16 +1,43 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Security.Claims;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using LogisticsAPI.Data;
 using LogisticsAPI.DTOs;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace LogisticsAPI.Tests
 {
+    public class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
+    {
+        public TestAuthHandler(
+            IOptionsMonitor<AuthenticationSchemeOptions> options,
+            ILoggerFactory logger,
+            UrlEncoder encoder)
+            : base(options, logger, encoder) { }
+
+        protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+        {
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.Name, "TestUser"),
+                new Claim(ClaimTypes.NameIdentifier, "test-user-id")
+            };
+            var identity = new ClaimsIdentity(claims, "Test");
+            var principal = new ClaimsPrincipal(identity);
+            var ticket = new AuthenticationTicket(principal, "Test");
+            return Task.FromResult(AuthenticateResult.Success(ticket));
+        }
+    }
+
     public class CustomWebAppFactory : WebApplicationFactory<Program>
     {
         protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
@@ -25,6 +52,17 @@ namespace LogisticsAPI.Tests
                 // Use a shared in-memory database for all tests
                 services.AddDbContext<ApplicationDbContext>(options =>
                     options.UseInMemoryDatabase("IntegrationTestDb"));
+
+                // Override authentication with a test scheme that auto-authenticates
+                services.AddAuthentication("Test")
+                    .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("Test", _ => { });
+
+                services.PostConfigureAll<AuthenticationOptions>(options =>
+                {
+                    options.DefaultAuthenticateScheme = "Test";
+                    options.DefaultChallengeScheme = "Test";
+                    options.DefaultScheme = "Test";
+                });
             });
         }
     }

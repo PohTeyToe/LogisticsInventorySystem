@@ -13,8 +13,18 @@ namespace LogisticsAPI.Repositories
         public async Task<IEnumerable<InventoryItem>> GetLowStockItemsAsync(int threshold)
         {
             return await _dbSet
+                .Include(i => i.Category)
+                .Include(i => i.Warehouse)
                 .Where(i => i.Quantity <= threshold)
                 .OrderBy(i => i.Quantity)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<InventoryItem>> GetAllWithDetailsAsync()
+        {
+            return await _dbSet
+                .Include(i => i.Category)
+                .Include(i => i.Warehouse)
                 .ToListAsync();
         }
 

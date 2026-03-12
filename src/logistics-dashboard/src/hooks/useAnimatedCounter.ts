@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 
 interface UseAnimatedCounterOptions {
   target: number;
@@ -11,25 +11,34 @@ interface UseAnimatedCounterOptions {
  * Animates a numeric counter from 0 to `target` using requestAnimationFrame
  * with easeOutExpo easing. Re-animates whenever `target` changes.
  *
- * @returns The current counter value as a formatted string.
+ * Returns `{ value, ref }`. Attach `ref` to the DOM element displaying the
+ * value — the hook will write to `textContent` directly during animation,
+ * bypassing React state to avoid re-render cascades (e.g. with Recharts).
+ * React state is synced once when the animation completes.
  */
 export function useAnimatedCounter({
   target: rawTarget,
   duration = 1200,
   formatter = (n) => String(Math.round(n)),
   enabled = true,
-}: UseAnimatedCounterOptions): string {
+}: UseAnimatedCounterOptions): { value: string; ref: React.RefCallback<HTMLElement> } {
   const target = Number.isFinite(rawTarget) ? rawTarget : 0;
   const [displayValue, setDisplayValue] = useState<string>(formatter(target));
   const formatterRef = useRef(formatter);
   formatterRef.current = formatter;
+  const elementRef = useRef<HTMLElement | null>(null);
   const rafRef = useRef<number | null>(null);
-  const targetRef = useRef(target);
-  targetRef.current = target;
+
+  const ref = useCallback((el: HTMLElement | null) => {
+    elementRef.current = el;
+  }, []);
 
   useEffect(() => {
+    const fmt = formatterRef.current;
     if (!enabled) {
-      setDisplayValue(formatterRef.current(target));
+      const val = fmt(target);
+      setDisplayValue(val);
+      if (elementRef.current) elementRef.current.textContent = val;
       return;
     }
 
@@ -45,11 +54,18 @@ export function useAnimatedCounter({
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
       const currentValue = easeOutExpo(progress) * startTarget;
+      const formatted = formatterRef.current(currentValue);
 
-      setDisplayValue(formatterRef.current(currentValue));
+      // Write directly to DOM — no React re-render
+      if (elementRef.current) {
+        elementRef.current.textContent = formatted;
+      }
 
       if (progress < 1) {
         rafRef.current = requestAnimationFrame(animate);
+      } else {
+        // Sync React state once at the end
+        setDisplayValue(formatted);
       }
     };
 
@@ -63,5 +79,5 @@ export function useAnimatedCounter({
     };
   }, [target, duration, enabled]);
 
-  return displayValue;
+  return { value: displayValue, ref };
 }

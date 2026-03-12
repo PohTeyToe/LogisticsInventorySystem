@@ -1,0 +1,69 @@
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--accent-teal-dim);
+  border: 1px solid var(--accent-teal);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+  animation: slideDown 0.2s ease;
+}
+
+.count {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-teal);
+  font-family: var(--font-ui);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.deleteBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--status-danger);
+  background: rgba(248, 81, 73, 0.15);
+  color: var(--status-danger);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.deleteBtn:hover {
+  background: rgba(248, 81, 73, 0.25);
+}
+
+.clearBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.clearBtn:hover {
+  border-color: var(--text-muted);
+  color: var(--text-primary);
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

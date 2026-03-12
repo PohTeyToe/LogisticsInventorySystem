@@ -1,9 +1,11 @@
+using System.Text.Json;
 using LogisticsAPI.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace LogisticsAPI.Data
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         private int _tenantId = 1;
 
@@ -27,6 +29,7 @@ namespace LogisticsAPI.Data
         public DbSet<Property> Properties { get; set; }
         public DbSet<PropertyOwner> PropertyOwners { get; set; }
         public DbSet<Reservation> Reservations { get; set; }
+        public DbSet<AuditLog> AuditLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -80,6 +83,10 @@ namespace LogisticsAPI.Data
             {
                 entity.HasIndex(e => e.TenantId);
                 entity.HasIndex(e => e.Status);
+
+                entity.Property(e => e.Status)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
 
                 entity.HasOne(e => e.Supplier)
                     .WithMany(s => s.PurchaseOrders)
@@ -137,18 +144,119 @@ namespace LogisticsAPI.Data
                 entity.HasIndex(e => e.TenantId);
                 entity.HasQueryFilter(e => e.TenantId == _tenantId);
             });
+
+            // AuditLog configuration
+            modelBuilder.Entity<AuditLog>(entity =>
+            {
+                entity.HasIndex(e => e.TenantId);
+                entity.HasIndex(e => e.Timestamp);
+                entity.HasIndex(e => new { e.EntityType, e.EntityId });
+                entity.HasQueryFilter(e => e.TenantId == _tenantId);
+            });
         }
 
         public override int SaveChanges()
         {
             SetTenantIdOnEntities();
-            return base.SaveChanges();
+            var auditEntries = CaptureAuditEntries();
+            var result = base.SaveChanges();
+            if (auditEntries.Count > 0)
+            {
+                AuditLogs.AddRange(auditEntries);
+                base.SaveChanges();
+            }
+            return result;
         }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             SetTenantIdOnEntities();
-            return await base.SaveChangesAsync(cancellationToken);
+            var auditEntries = CaptureAuditEntries();
+            var result = await base.SaveChangesAsync(cancellationToken);
+            if (auditEntries.Count > 0)
+            {
+                AuditLogs.AddRange(auditEntries);
+                await base.SaveChangesAsync(cancellationToken);
+            }
+            return result;
+        }
+
+        private List<AuditLog> CaptureAuditEntries()
+        {
+            var auditEntries = new List<AuditLog>();
+
+            foreach (var entry in ChangeTracker.Entries())
+            {
+                // Skip AuditLog itself to avoid recursion
+                if (entry.Entity is AuditLog)
+                    continue;
+
+                // Skip unchanged or detached
+                if (entry.State == EntityState.Unchanged || entry.State == EntityState.Detached)
+                    continue;
+
+                var entityType = entry.Entity.GetType().Name;
+                var idProp = entry.Entity.GetType().GetProperty("Id");
+                var entityId = idProp != null ? (int)(idProp.GetValue(entry.Entity) ?? 0) : 0;
+
+                string action = entry.State switch
+                {
+                    EntityState.Added => "Create",
+                    EntityState.Modified => "Update",
+                    EntityState.Deleted => "Delete",
+                    _ => string.Empty
+                };
+
+                if (string.IsNullOrEmpty(action))
+                    continue;
+
+                string? changes = null;
+
+                if (entry.State == EntityState.Modified)
+                {
+                    var changesDict = new Dictionary<string, object?>();
+                    foreach (var prop in entry.Properties.Where(p => p.IsModified))
+                    {
+                        changesDict[prop.Metadata.Name] = new
+                        {
+                            Old = prop.OriginalValue,
+                            New = prop.CurrentValue
+                        };
+                    }
+                    if (changesDict.Count > 0)
+                        changes = JsonSerializer.Serialize(changesDict);
+                }
+                else if (entry.State == EntityState.Added)
+                {
+                    var valuesDict = new Dictionary<string, object?>();
+                    foreach (var prop in entry.Properties)
+                    {
+                        valuesDict[prop.Metadata.Name] = prop.CurrentValue;
+                    }
+                    changes = JsonSerializer.Serialize(valuesDict);
+                }
+                else if (entry.State == EntityState.Deleted)
+                {
+                    var valuesDict = new Dictionary<string, object?>();
+                    foreach (var prop in entry.Properties)
+                    {
+                        valuesDict[prop.Metadata.Name] = prop.OriginalValue;
+                    }
+                    changes = JsonSerializer.Serialize(valuesDict);
+                }
+
+                auditEntries.Add(new AuditLog
+                {
+                    EntityType = entityType,
+                    EntityId = entityId,
+                    Action = action,
+                    Changes = changes,
+                    Timestamp = DateTime.UtcNow,
+                    TenantId = _tenantId
+                });
+            }
+
+            return auditEntries;
         }
 
         private void SetTenantIdOnEntities()

@@ -7,7 +7,12 @@ export async function getPurchaseOrders(status?: PurchaseOrderStatus) {
   return data;
 }
 
-export async function createPurchaseOrder(order: { supplierId: number; items: { itemName: string; quantity: number; unitPrice: number }[] }) {
+export async function getPurchaseOrder(id: number) {
+  const { data } = await client.get<PurchaseOrder>(`/api/purchaseorder/${id}`);
+  return data;
+}
+
+export async function createPurchaseOrder(order: { supplierId: number; expectedDeliveryDate?: string; items: { itemName: string; quantity: number; unitPrice: number }[] }) {
   const { data } = await client.post<PurchaseOrder>('/api/purchaseorder', order);
   return data;
 }

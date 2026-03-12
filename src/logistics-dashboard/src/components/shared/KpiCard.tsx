@@ -11,9 +11,10 @@ interface KpiCardProps {
   trend?: { direction: 'up' | 'down' | 'flat'; text: string };
   sparkline?: ReactNode;
   delay?: number;
+  valueRef?: React.RefCallback<HTMLElement>;
 }
 
-export default function KpiCard({ label, value, icon, variant, trend, sparkline, delay = 0 }: KpiCardProps) {
+export default function KpiCard({ label, value, icon, variant, trend, sparkline, delay = 0, valueRef }: KpiCardProps) {
   return (
     <div
       className={`${styles.card} ${styles[variant]}`}
@@ -23,7 +24,7 @@ export default function KpiCard({ label, value, icon, variant, trend, sparkline,
         <div className={styles.label}>{label}</div>
         <div className={styles.icon}>{icon}</div>
       </div>
-      <div className={styles.value}>{value}</div>
+      <div className={styles.value} ref={valueRef}>{value}</div>
       {sparkline && <div className={styles.sparkline}>{sparkline}</div>}
       {trend && (
         <div className={`${styles.trend} ${styles[trend.direction]}`}>

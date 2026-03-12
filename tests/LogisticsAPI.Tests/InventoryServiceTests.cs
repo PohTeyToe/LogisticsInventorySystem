@@ -2,6 +2,7 @@ using LogisticsAPI.DTOs;
 using LogisticsAPI.Models;
 using LogisticsAPI.Repositories;
 using LogisticsAPI.Services;
+using Microsoft.Extensions.Caching.Memory;
 using Moq;
 using Xunit;
 
@@ -9,13 +10,23 @@ namespace LogisticsAPI.Tests
 {
     public class InventoryServiceTests
     {
+        private readonly Mock<IUnitOfWork> _mockUow;
         private readonly Mock<IInventoryRepository> _mockRepo;
+        private readonly Mock<INotificationService> _mockNotification;
+        private readonly IMemoryCache _cache;
         private readonly InventoryService _service;
 
         public InventoryServiceTests()
         {
+            _mockUow = new Mock<IUnitOfWork>();
             _mockRepo = new Mock<IInventoryRepository>();
-            _service = new InventoryService(_mockRepo.Object);
+            _mockNotification = new Mock<INotificationService>();
+            _cache = new MemoryCache(new MemoryCacheOptions());
+
+            _mockUow.Setup(u => u.Inventory).Returns(_mockRepo.Object);
+            _mockUow.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+            _service = new InventoryService(_mockUow.Object, _mockNotification.Object, _cache);
         }
 
         [Fact]
@@ -39,6 +50,7 @@ namespace LogisticsAPI.Tests
             Assert.Equal("TEST-001", result.SKU);
             Assert.Equal("Test Item", result.Name);
             Assert.Equal(10, result.Quantity);
+            _mockUow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -108,6 +120,7 @@ namespace LogisticsAPI.Tests
             Assert.NotNull(result);
             Assert.Equal("Updated", result!.Name);
             Assert.Equal(15, result.Quantity);
+            _mockUow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -121,6 +134,7 @@ namespace LogisticsAPI.Tests
             var result = await _service.DeleteItemAsync(1);
 
             Assert.True(result);
+            _mockUow.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -179,7 +193,7 @@ namespace LogisticsAPI.Tests
                 new() { Id = 2, SKU = "VAL-002", Name = "Item 2", Quantity = 5, UnitPrice = 50m }
             };
 
-            _mockRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(items);
+            _mockRepo.Setup(r => r.GetAllWithDetailsAsync()).ReturnsAsync(items);
 
             var result = await _service.GetValuationReportAsync();
 

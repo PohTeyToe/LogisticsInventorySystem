@@ -224,8 +224,127 @@
   letter-spacing: 0.5px;
 }
 
+/* Sortable headers */
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s;
+}
+
+.sortable:hover {
+  color: var(--accent-teal);
+}
+
+/* Pagination extras */
+.pageSizeSelect {
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-family: var(--font-ui);
+  outline: none;
+  cursor: pointer;
+}
+
+.pageSizeSelect:focus { border-color: var(--accent-teal); }
+
+.pageBtn {
+  min-width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pageBtn:hover {
+  border-color: var(--accent-teal);
+  color: var(--accent-teal);
+}
+
+.pageBtnActive {
+  border-color: var(--accent-teal) !important;
+  background: var(--accent-teal-dim) !important;
+  color: var(--accent-teal) !important;
+}
+
+.pageEllipsis {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.actionBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Utilization bar for Warehouses */
+.utilBarWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 100px;
+}
+
+.utilBarBg {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-input);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.utilBarFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+
+.utilLow { background: var(--status-success); }
+.utilMid { background: var(--amber); }
+.utilHigh { background: var(--status-danger); }
+
+/* Responsive table wrapper */
+.tableWrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hide less important columns on mobile */
+.hideMobile {
+  /* visible by default */
+}
+
+/* Checkbox for bulk select */
+.checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-teal);
+  cursor: pointer;
+}
+
+.checkboxCell {
+  width: 40px;
+  padding-left: 16px !important;
+  padding-right: 4px !important;
+}
+
+.rowSelected {
+  background: var(--accent-teal-dim) !important;
+}
+
 @media (max-width: 640px) {
   .toolbar { flex-direction: column; }
   .searchWrap { max-width: 100%; }
   .resultCards { grid-template-columns: 1fr; }
+  .hideMobile { display: none; }
 }

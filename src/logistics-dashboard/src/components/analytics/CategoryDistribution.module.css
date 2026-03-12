@@ -1,0 +1,34 @@
+.treemapContainer {
+  width: 100%;
+  min-height: 280px;
+}
+
+.treemapLabel {
+  font-family: var(--font-data);
+  font-size: 11px;
+  fill: var(--text-primary);
+  pointer-events: none;
+}
+
+.treemapValue {
+  font-family: var(--font-data);
+  font-size: 10px;
+  fill: var(--text-secondary);
+  pointer-events: none;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.skeletonChartArea {
+  height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}

@@ -1,9 +1,15 @@
+using System.Text;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using LogisticsAPI.Data;
+using LogisticsAPI.Hubs;
 using LogisticsAPI.Middleware;
+using LogisticsAPI.Models;
 using LogisticsAPI.Repositories;
 using LogisticsAPI.Services;
 using Serilog;
@@ -42,9 +48,51 @@ else
         options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 }
 
+// Identity
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 6;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.User.RequireUniqueEmail = true;
+})
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddDefaultTokenProviders();
+
+// JWT Authentication
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var jwtSecret = jwtSettings["Secret"] ?? "dev-jwt-secret-key-min-32-chars!!";
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+        ValidateIssuer = true,
+        ValidIssuer = jwtSettings["Issuer"] ?? "LogisticsAPI",
+        ValidateAudience = true,
+        ValidAudience = jwtSettings["Audience"] ?? "LogisticsDashboard",
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.FromMinutes(1)
+    };
+});
+
+builder.Services.AddAuthorization();
+
+// In-memory caching
+builder.Services.AddMemoryCache();
+
 // Repository registrations
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IInventoryRepository, InventoryRepository>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Service registrations
 builder.Services.AddScoped<IInventoryService, InventoryService>();
@@ -58,6 +106,10 @@ builder.Services.AddScoped<IWarehouseService, WarehouseService>();
 builder.Services.AddScoped<ISupplierService, SupplierService>();
 builder.Services.AddScoped<IPurchaseOrderService, PurchaseOrderService>();
 builder.Services.AddScoped<IStockMovementService, StockMovementService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
+// SignalR
+builder.Services.AddSignalR();
 
 builder.Services.AddCors(options =>
 {
@@ -76,7 +128,8 @@ builder.Services.AddCors(options =>
                   "https://logistics-inventory-api-abdallah.azurewebsites.net",
                   "https://logistics-inventory-ui-abdallah.azurewebsites.net")
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 
@@ -98,7 +151,11 @@ builder.Services.AddRateLimiter(options =>
 });
 
 builder.Services.AddControllers()
-    .AddXmlDataContractSerializerFormatters();
+    .AddXmlDataContractSerializerFormatters()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -129,6 +186,10 @@ app.UseSwaggerUI();
 app.UseCors();
 app.UseRateLimiter();
 app.UseErrorHandling();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.UseTenantMiddleware();
 
 if (!app.Environment.IsDevelopment())
@@ -137,6 +198,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.MapControllers().RequireRateLimiting("fixed");
+app.MapHub<InventoryHub>("/hubs/inventory");
 app.MapHealthChecks("/api/health", new HealthCheckOptions
 {
     ResponseWriter = async (context, report) =>

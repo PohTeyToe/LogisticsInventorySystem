@@ -13,11 +13,14 @@ namespace LogisticsAPI.Models
         public DateTime OrderDate { get; set; } = DateTime.UtcNow;
 
         [Required]
-        [StringLength(20)]
-        public string Status { get; set; } = "Pending"; // Pending, Approved, Received, Cancelled
+        public PurchaseOrderStatus Status { get; set; } = PurchaseOrderStatus.Pending;
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalAmount { get; set; }
+
+        public DateTime? ExpectedDeliveryDate { get; set; }
+
+        public DateTime? DeliveredDate { get; set; }
 
         public int TenantId { get; set; }
 

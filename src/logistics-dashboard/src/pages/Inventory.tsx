@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Plus, Trash2, Edit3, Search, Download, Eye } from 'lucide-react';
+import { useState } from 'react';
+import { Plus, Trash2, Edit3, Search, Eye } from 'lucide-react';
 import Header from '../components/layout/Header';
 import Card from '../components/shared/Card';
 import Button from '../components/shared/Button';
@@ -11,23 +11,24 @@ import ToastContainer from '../components/shared/ToastContainer';
 import DetailDrawer from '../components/shared/DetailDrawer';
 import InventoryDetail from '../components/shared/InventoryDetail';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
-import { getInventory, createInventoryItem, updateInventoryItem, deleteInventoryItem } from '../api/inventory';
-import { getCategories } from '../api/categories';
-import { getWarehouses } from '../api/warehouses';
-import { getStockMovements } from '../api/stockMovements';
+import ExportDropdown from '../components/shared/ExportDropdown';
+import BulkActionBar from '../components/shared/BulkActionBar';
+import { useInventoryList, useCreateInventoryItem, useUpdateInventoryItem, useDeleteInventoryItem } from '../hooks/queries/useInventoryQueries';
+import { useCategoriesList } from '../hooks/queries/useCategoryQueries';
+import { useWarehousesList } from '../hooks/queries/useWarehouseQueries';
+import { useItemMovementHistory } from '../hooks/queries/useStockMovementQueries';
+import { getInventory } from '../api/inventory';
 import { exportToCsv } from '../utils/exportCsv';
+import { exportTableToPdf } from '../utils/exportPdf';
 import { useToast } from '../hooks/useToastSimple';
-import type { InventoryItem, Category, Warehouse, CreateInventoryItemRequest, StockMovement } from '../types';
+import { useBulkSelect } from '../hooks/useBulkSelect';
+import { getPageSize, formatCurrency } from '../hooks/useSettings';
+import type { InventoryItem, CreateInventoryItemRequest } from '../types';
 import styles from './CrudPage.module.css';
 
 export default function Inventory() {
-  const [items, setItems] = useState<InventoryItem[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<InventoryItem | null>(null);
   const [form, setForm] = useState<CreateInventoryItemRequest>({
@@ -36,34 +37,30 @@ export default function Inventory() {
   const { toasts, addToast, dismiss } = useToast();
 
   // Detail drawer state
+  const [drawerItemId, setDrawerItemId] = useState<number | null>(null);
   const [drawerItem, setDrawerItem] = useState<InventoryItem | null>(null);
-  const [drawerMovements, setDrawerMovements] = useState<StockMovement[]>([]);
+
+  // Bulk select
+  const bulk = useBulkSelect();
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
 
   // Confirm dialog state
   const [confirmDelete, setConfirmDelete] = useState<{ id: number; name: string } | null>(null);
 
-  const pageSize = 20;
+  const pageSize = getPageSize(20);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [res, cats, whs] = await Promise.all([
-        getInventory(page, pageSize, search || undefined),
-        getCategories(),
-        getWarehouses(),
-      ]);
-      setItems(res.items);
-      setTotalCount(res.totalCount);
-      setCategories(cats);
-      setWarehouses(whs);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search]);
+  // TanStack Query hooks
+  const { data: inventoryData, isLoading: loading } = useInventoryList(page, pageSize, search || undefined);
+  const { data: categories = [] } = useCategoriesList();
+  const { data: warehouses = [] } = useWarehousesList();
+  const { data: drawerMovements = [] } = useItemMovementHistory(drawerItemId ?? 0);
 
-  useEffect(() => { load(); }, [load]);
+  const items = inventoryData?.items ?? [];
+  const totalCount = inventoryData?.totalCount ?? 0;
+
+  const createMutation = useCreateInventoryItem();
+  const updateMutation = useUpdateInventoryItem();
+  const deleteMutation = useDeleteInventoryItem();
 
   const openCreate = () => {
     setEditing(null);
@@ -75,20 +72,15 @@ export default function Inventory() {
     setEditing(item);
     setForm({
       sku: item.sku, name: item.name, description: item.description, quantity: item.quantity,
-      location: item.location, unitPrice: item.unitPrice, categoryId: item.categoryId,
+      location: item.location ?? undefined, unitPrice: item.unitPrice, categoryId: item.categoryId,
       warehouseId: item.warehouseId, reorderLevel: item.reorderLevel,
     });
     setModalOpen(true);
   };
 
-  const openDetail = async (item: InventoryItem) => {
+  const openDetail = (item: InventoryItem) => {
     setDrawerItem(item);
-    try {
-      const movements = await getStockMovements({});
-      setDrawerMovements(movements.filter((m) => m.itemSku === item.sku));
-    } catch {
-      setDrawerMovements([]);
-    }
+    setDrawerItemId(item.id);
   };
 
   const handleSave = async () => {
@@ -98,14 +90,13 @@ export default function Inventory() {
     }
     try {
       if (editing) {
-        await updateInventoryItem(editing.id, form);
+        await updateMutation.mutateAsync({ id: editing.id, item: form });
         addToast('Item updated successfully', 'success');
       } else {
-        await createInventoryItem(form);
+        await createMutation.mutateAsync(form);
         addToast('Item created successfully', 'success');
       }
       setModalOpen(false);
-      load();
     } catch (err) {
       console.error(err);
       addToast('Failed to save item', 'danger');
@@ -114,41 +105,72 @@ export default function Inventory() {
 
   const handleDelete = async (id: number) => {
     try {
-      await deleteInventoryItem(id);
+      await deleteMutation.mutateAsync(id);
       addToast('Item deleted successfully', 'success');
       setConfirmDelete(null);
-      load();
     } catch (err) {
       console.error(err);
       addToast('Failed to delete item', 'danger');
     }
   };
 
-  const handleExport = async () => {
+  const getAllItems = async (): Promise<InventoryItem[]> => {
+    let allItems: InventoryItem[] = [];
+    let pg = 1;
+    let hasMore = true;
+    while (hasMore) {
+      const res = await getInventory(pg, 100);
+      allItems = allItems.concat(res.items);
+      hasMore = pg < res.totalPages;
+      pg++;
+    }
+    return allItems;
+  };
+
+  const exportHeaders = ['SKU', 'Name', 'Category', 'Warehouse', 'Quantity', 'Unit Price', 'Total Value'];
+  const toExportRows = (data: InventoryItem[]) =>
+    data.map((item) => [
+      item.sku, item.name, item.categoryName, item.warehouseName,
+      String(item.quantity), String(item.unitPrice), String(item.quantity * item.unitPrice),
+    ]);
+
+  const handleExportCsv = async () => {
     try {
-      let allItems: InventoryItem[] = [];
-      let pg = 1;
-      let hasMore = true;
-      while (hasMore) {
-        const res = await getInventory(pg, 100);
-        allItems = allItems.concat(res.items);
-        hasMore = pg < res.totalPages;
-        pg++;
-      }
-      const headers = ['SKU', 'Name', 'Category', 'Warehouse', 'Quantity', 'Unit Price', 'Total Value'];
-      const rows = allItems.map((item) => [
+      const allItems = await getAllItems();
+      exportToCsv('inventory.csv', exportHeaders, allItems.map((item) => [
         item.sku, item.name, item.categoryName, item.warehouseName,
         item.quantity, item.unitPrice, item.quantity * item.unitPrice,
-      ]);
-      exportToCsv('inventory.csv', headers, rows);
+      ]));
     } catch (err) {
       console.error(err);
       addToast('Failed to export inventory', 'danger');
     }
   };
 
+  const handleExportPdf = async () => {
+    try {
+      const allItems = await getAllItems();
+      exportTableToPdf('Inventory Items', exportHeaders, toExportRows(allItems), 'inventory');
+    } catch (err) {
+      console.error(err);
+      addToast('Failed to export inventory', 'danger');
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      await Promise.all([...bulk.selectedIds].map((id) => deleteMutation.mutateAsync(id)));
+      addToast(`${bulk.count} item(s) deleted successfully`, 'success');
+      bulk.clearSelection();
+      setBulkConfirmOpen(false);
+    } catch (err) {
+      console.error(err);
+      addToast('Failed to delete some items', 'danger');
+    }
+  };
+
   const totalPages = Math.ceil(totalCount / pageSize);
-  const fmtCurrency = (n: number) => `$${n.toFixed(2)}`;
+  const fmtCurrency = (n: number) => formatCurrency(n, 2);
 
   return (
     <>
@@ -165,46 +187,63 @@ export default function Inventory() {
             />
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <Button variant="ghost" size="sm" onClick={handleExport}>
-              <Download size={14} /> Export
-            </Button>
+            <ExportDropdown onExportCsv={handleExportCsv} onExportPdf={handleExportPdf} />
             <Button variant="primary" size="md" onClick={openCreate}>
               <Plus size={14} /> Add Item
             </Button>
           </div>
         </div>
 
+        <BulkActionBar count={bulk.count} onDelete={() => setBulkConfirmOpen(true)} onClear={bulk.clearSelection} />
+
         <Card title="All Items" count={totalCount} noPadding>
+          <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
               <tr>
+                <th className={styles.checkboxCell}>
+                  <input
+                    type="checkbox"
+                    className={styles.checkbox}
+                    checked={bulk.isAllSelected(items.map((i) => i.id))}
+                    onChange={() => bulk.toggleSelectAll(items.map((i) => i.id))}
+                  />
+                </th>
                 <th>SKU</th>
                 <th>Name</th>
-                <th>Category</th>
-                <th>Warehouse</th>
+                <th className={styles.hideMobile}>Category</th>
+                <th className={styles.hideMobile}>Warehouse</th>
                 <th>Qty</th>
                 <th>Unit Price</th>
-                <th>Value</th>
+                <th className={styles.hideMobile}>Value</th>
                 <th>Status</th>
                 <th></th>
               </tr>
             </thead>
             {loading ? (
-              <SkeletonTable rows={10} cols={9} />
+              <SkeletonTable rows={10} cols={10} />
             ) : (
             <tbody>
               {items.length === 0 && (
-                <tr><td colSpan={9} className={styles.empty}>No inventory items found</td></tr>
+                <tr><td colSpan={10} className={styles.empty}>No inventory items found</td></tr>
               )}
               {items.map((item) => (
-                <tr key={item.id} onClick={() => openDetail(item)} style={{ cursor: 'pointer' }}>
+                <tr key={item.id} onClick={() => openDetail(item)} style={{ cursor: 'pointer' }} className={bulk.isSelected(item.id) ? styles.rowSelected : ''}>
+                  <td className={styles.checkboxCell} onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      className={styles.checkbox}
+                      checked={bulk.isSelected(item.id)}
+                      onChange={() => bulk.toggleSelect(item.id)}
+                    />
+                  </td>
                   <td className={styles.mono}>{item.sku}</td>
                   <td className={styles.primary}>{item.name}</td>
-                  <td>{item.categoryName}</td>
-                  <td>{item.warehouseName}</td>
+                  <td className={styles.hideMobile}>{item.categoryName}</td>
+                  <td className={styles.hideMobile}>{item.warehouseName}</td>
                   <td className={styles.mono}>{item.quantity.toLocaleString()}</td>
                   <td className={styles.mono}>{fmtCurrency(item.unitPrice)}</td>
-                  <td className={styles.mono}>{fmtCurrency(item.quantity * item.unitPrice)}</td>
+                  <td className={`${styles.mono} ${styles.hideMobile}`}>{fmtCurrency(item.quantity * item.unitPrice)}</td>
                   <td>
                     {item.quantity <= item.reorderLevel ? (
                       <StatusBadge variant="danger">Low Stock</StatusBadge>
@@ -230,6 +269,7 @@ export default function Inventory() {
             </tbody>
             )}
           </table>
+          </div>
           {totalPages > 1 && (
             <div className={styles.pagination}>
               <span className={styles.mono}>Page {page} of {totalPages} ({totalCount} items)</span>
@@ -276,7 +316,7 @@ export default function Inventory() {
 
         <DetailDrawer
           open={!!drawerItem}
-          onClose={() => setDrawerItem(null)}
+          onClose={() => { setDrawerItem(null); setDrawerItemId(null); }}
           title={drawerItem?.name || 'Item Details'}
         >
           {drawerItem && (
@@ -292,6 +332,16 @@ export default function Inventory() {
           variant="danger"
           onConfirm={() => confirmDelete && handleDelete(confirmDelete.id)}
           onCancel={() => setConfirmDelete(null)}
+        />
+
+        <ConfirmDialog
+          open={bulkConfirmOpen}
+          title="Delete Selected Items"
+          message={`Are you sure you want to delete ${bulk.count} selected item(s)? This action cannot be undone.`}
+          confirmLabel="Delete All"
+          variant="danger"
+          onConfirm={handleBulkDelete}
+          onCancel={() => setBulkConfirmOpen(false)}
         />
 
         <ToastContainer toasts={toasts} dismiss={dismiss} />

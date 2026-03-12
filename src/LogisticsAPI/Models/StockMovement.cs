@@ -24,6 +24,9 @@ namespace LogisticsAPI.Models
 
         public int TenantId { get; set; }
 
+        [StringLength(50)]
+        public string? MovementReasonCode { get; set; }
+
         // Navigation properties
         [ForeignKey("InventoryItemId")]
         public InventoryItem? InventoryItem { get; set; }

@@ -22,6 +22,44 @@ namespace LogisticsAPI.DTOs
         [StringLength(500)]
         [DataMember]
         public string? Reason { get; set; }
+
+        [StringLength(50)]
+        [DataMember]
+        public string? MovementReasonCode { get; set; }
+    }
+
+    [DataContract]
+    public class StockTransferRequest
+    {
+        [Required]
+        [DataMember]
+        public int SourceWarehouseId { get; set; }
+
+        [Required]
+        [DataMember]
+        public int DestinationWarehouseId { get; set; }
+
+        [Required]
+        [DataMember]
+        public int InventoryItemId { get; set; }
+
+        [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1.")]
+        [DataMember]
+        public int Quantity { get; set; }
+
+        [StringLength(500)]
+        [DataMember]
+        public string? Reason { get; set; }
+    }
+
+    [DataContract]
+    public class StockTransferResponse
+    {
+        [DataMember]
+        public StockMovementResponse OutMovement { get; set; } = null!;
+
+        [DataMember]
+        public StockMovementResponse InMovement { get; set; } = null!;
     }
 
     [DataContract]
@@ -47,5 +85,8 @@ namespace LogisticsAPI.DTOs
 
         [DataMember]
         public DateTime Timestamp { get; set; }
+
+        [DataMember]
+        public string? MovementReasonCode { get; set; }
     }
 }

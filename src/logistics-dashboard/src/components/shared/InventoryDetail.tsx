@@ -9,8 +9,8 @@ interface InventoryDetailProps {
   movements: StockMovement[];
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+function formatCurrency(value: number, currencyCode?: string | null): string {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: currencyCode || 'USD' }).format(value);
 }
 
 function formatDate(iso: string): string {
@@ -89,11 +89,11 @@ export default function InventoryDetail({ item, movements }: InventoryDetailProp
           </div>
           <div className={styles.statCard}>
             <span className={styles.statLabel}>Unit Price</span>
-            <span className={styles.statValue}>{formatCurrency(item.unitPrice)}</span>
+            <span className={styles.statValue}>{formatCurrency(item.unitPrice, item.currencyCode)}</span>
           </div>
           <div className={styles.statCard}>
             <span className={styles.statLabel}>Total Value</span>
-            <span className={styles.statValue}>{formatCurrency(totalValue)}</span>
+            <span className={styles.statValue}>{formatCurrency(totalValue, item.currencyCode)}</span>
           </div>
           <div className={styles.statCard}>
             <span className={styles.statLabel}>Reorder Level</span>
@@ -118,6 +118,38 @@ export default function InventoryDetail({ item, movements }: InventoryDetailProp
             <dt className={styles.detailLabel}>Location</dt>
             <dd className={styles.detailValue}>{item.location || 'Not specified'}</dd>
           </div>
+          {item.warehouseZone && (
+            <div className={styles.detailRow}>
+              <dt className={styles.detailLabel}>Warehouse Zone</dt>
+              <dd className={styles.detailValue}>{item.warehouseZone}</dd>
+            </div>
+          )}
+          <div className={styles.detailRow}>
+            <dt className={styles.detailLabel}>Unit of Measure</dt>
+            <dd className={styles.detailValue}>{item.unitOfMeasure || 'EA'}</dd>
+          </div>
+          <div className={styles.detailRow}>
+            <dt className={styles.detailLabel}>Currency</dt>
+            <dd className={styles.detailValue}>{item.currencyCode || 'USD'}</dd>
+          </div>
+          {item.lotNumber && (
+            <div className={styles.detailRow}>
+              <dt className={styles.detailLabel}>Lot Number</dt>
+              <dd className={styles.detailValue}>{item.lotNumber}</dd>
+            </div>
+          )}
+          {item.serialNumber && (
+            <div className={styles.detailRow}>
+              <dt className={styles.detailLabel}>Serial Number</dt>
+              <dd className={styles.detailValue}>{item.serialNumber}</dd>
+            </div>
+          )}
+          {item.expiryDate && (
+            <div className={styles.detailRow}>
+              <dt className={styles.detailLabel}>Expiry Date</dt>
+              <dd className={styles.detailValue}>{formatDate(item.expiryDate)}</dd>
+            </div>
+          )}
           <div className={styles.detailRow}>
             <dt className={styles.detailLabel}>Created</dt>
             <dd className={styles.detailValue}>{formatDate(item.createdAt)}</dd>

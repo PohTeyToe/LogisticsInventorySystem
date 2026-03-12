@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Plus, Trash2, Edit3, Download } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Plus, Trash2, Edit3, Download, Search } from 'lucide-react';
 import Header from '../components/layout/Header';
 import Card from '../components/shared/Card';
 import Button from '../components/shared/Button';
@@ -7,30 +7,55 @@ import Modal from '../components/shared/Modal';
 import FormField from '../components/shared/FormField';
 import SkeletonTable from '../components/shared/SkeletonTable';
 import ToastContainer from '../components/shared/ToastContainer';
-import { getCategories, createCategory, updateCategory, deleteCategory } from '../api/categories';
-import { exportToCsv } from '../utils/exportCsv';
+import Pagination from '../components/shared/Pagination';
+import BulkActionBar from '../components/shared/BulkActionBar';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
+import { useCategoriesList, useCreateCategory, useUpdateCategory, useDeleteCategory } from '../hooks/queries/useCategoryQueries';
+import { exportToCsv } from '../utils/exportCsv';
 import { useToast } from '../hooks/useToastSimple';
+import { useBulkSelect } from '../hooks/useBulkSelect';
+import { useTableSort } from '../hooks/useTableSort';
+import { usePagination } from '../hooks/usePagination';
 import type { Category } from '../types';
 import styles from './CrudPage.module.css';
 
+type SortKey = 'name' | 'itemCount';
+
+const accessor = (item: Category, key: SortKey) => {
+  switch (key) {
+    case 'name': return item.name;
+    case 'itemCount': return item.itemCount ?? 0;
+  }
+};
+
 export default function Categories() {
-  const [items, setItems] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [form, setForm] = useState({ name: '', description: '' });
+  const [search, setSearch] = useState('');
   const { toasts, addToast, dismiss } = useToast();
   const [confirmDelete, setConfirmDelete] = useState<{ id: number; name: string } | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try { setItems(await getCategories()); }
-    catch (err) { console.error(err); }
-    finally { setLoading(false); }
-  }, []);
+  // Bulk select
+  const bulk = useBulkSelect();
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
 
-  useEffect(() => { load(); }, [load]);
+  const { data: items = [], isLoading: loading } = useCategoriesList();
+  const createMutation = useCreateCategory();
+  const updateMutation = useUpdateCategory();
+  const deleteMutation = useDeleteCategory();
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return items;
+    const q = search.toLowerCase();
+    return items.filter((i) =>
+      i.name.toLowerCase().includes(q) ||
+      (i.description && i.description.toLowerCase().includes(q))
+    );
+  }, [items, search]);
+
+  const { sortedItems, toggleSort, getSortIndicator } = useTableSort<Category, SortKey>(filtered, accessor);
+  const { paginatedItems, page, pageSize, totalPages, setPage, setPageSize, startIndex, endIndex, totalItems } = usePagination(sortedItems);
 
   const openCreate = () => { setEditing(null); setForm({ name: '', description: '' }); setModalOpen(true); };
   const openEdit = (item: Category) => { setEditing(item); setForm({ name: item.name, description: item.description }); setModalOpen(true); };
@@ -42,14 +67,13 @@ export default function Categories() {
     }
     try {
       if (editing) {
-        await updateCategory(editing.id, form);
+        await updateMutation.mutateAsync({ id: editing.id, category: form });
         addToast('Category updated successfully', 'success');
       } else {
-        await createCategory(form);
+        await createMutation.mutateAsync(form);
         addToast('Category created successfully', 'success');
       }
       setModalOpen(false);
-      load();
     } catch (err) {
       console.error(err);
       addToast('Failed to save category', 'danger');
@@ -58,13 +82,24 @@ export default function Categories() {
 
   const handleDelete = async (id: number) => {
     try {
-      await deleteCategory(id);
+      await deleteMutation.mutateAsync(id);
       addToast('Category deleted successfully', 'success');
       setConfirmDelete(null);
-      load();
     } catch (err) {
       console.error(err);
       addToast('Failed to delete category', 'danger');
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      await Promise.all([...bulk.selectedIds].map((id) => deleteMutation.mutateAsync(id)));
+      addToast(`${bulk.count} category(ies) deleted successfully`, 'success');
+      bulk.clearSelection();
+      setBulkConfirmOpen(false);
+    } catch (err) {
+      console.error(err);
+      addToast('Failed to delete some categories', 'danger');
     }
   };
 
@@ -79,7 +114,15 @@ export default function Categories() {
       <Header title="Categories" />
       <main className={styles.content}>
         <div className={styles.toolbar}>
-          <div />
+          <div className={styles.searchWrap}>
+            <Search size={14} className={styles.searchIcon} />
+            <input
+              className={styles.searchInput}
+              placeholder="Search categories..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            />
+          </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <Button variant="ghost" size="sm" onClick={handleExport}>
               <Download size={14} /> Export
@@ -88,22 +131,46 @@ export default function Categories() {
           </div>
         </div>
 
-        <Card title="All Categories" count={items.length} noPadding>
+        <BulkActionBar count={bulk.count} onDelete={() => setBulkConfirmOpen(true)} onClear={bulk.clearSelection} />
+
+        <Card title="All Categories" count={totalItems} noPadding>
+          <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
-              <tr><th>Name</th><th>Description</th><th>Items</th><th></th></tr>
+              <tr>
+                <th className={styles.checkboxCell}>
+                  <input
+                    type="checkbox"
+                    className={styles.checkbox}
+                    checked={bulk.isAllSelected(paginatedItems.map((i) => i.id))}
+                    onChange={() => bulk.toggleSelectAll(paginatedItems.map((i) => i.id))}
+                  />
+                </th>
+                <th className={styles.sortable} onClick={() => toggleSort('name')}>Name{getSortIndicator('name')}</th>
+                <th className={styles.hideMobile}>Description</th>
+                <th className={styles.sortable} onClick={() => toggleSort('itemCount')}>Items{getSortIndicator('itemCount')}</th>
+                <th></th>
+              </tr>
             </thead>
             {loading ? (
-              <SkeletonTable rows={5} cols={4} />
+              <SkeletonTable rows={5} cols={5} />
             ) : (
             <tbody>
-              {items.length === 0 && (
-                <tr><td colSpan={4} className={styles.empty}>No categories found</td></tr>
+              {paginatedItems.length === 0 && (
+                <tr><td colSpan={5} className={styles.empty}>No categories found</td></tr>
               )}
-              {items.map((item) => (
-                <tr key={item.id}>
+              {paginatedItems.map((item) => (
+                <tr key={item.id} className={bulk.isSelected(item.id) ? styles.rowSelected : ''}>
+                  <td className={styles.checkboxCell}>
+                    <input
+                      type="checkbox"
+                      className={styles.checkbox}
+                      checked={bulk.isSelected(item.id)}
+                      onChange={() => bulk.toggleSelect(item.id)}
+                    />
+                  </td>
                   <td className={styles.primary}>{item.name}</td>
-                  <td>{item.description || '-'}</td>
+                  <td className={styles.hideMobile}>{item.description || '-'}</td>
                   <td className={styles.mono}>{item.itemCount ?? '-'}</td>
                   <td>
                     <div className={styles.actions}>
@@ -116,6 +183,12 @@ export default function Categories() {
             </tbody>
             )}
           </table>
+          </div>
+          <Pagination
+            page={page} totalPages={totalPages} pageSize={pageSize}
+            totalItems={totalItems} startIndex={startIndex} endIndex={endIndex}
+            onPageChange={setPage} onPageSizeChange={setPageSize}
+          />
         </Card>
 
         <Modal title={editing ? 'Edit Category' : 'Add Category'} open={modalOpen} onClose={() => setModalOpen(false)}
@@ -131,6 +204,15 @@ export default function Categories() {
           variant="danger"
           onConfirm={() => confirmDelete && handleDelete(confirmDelete.id)}
           onCancel={() => setConfirmDelete(null)}
+        />
+        <ConfirmDialog
+          open={bulkConfirmOpen}
+          title="Delete Selected Categories"
+          message={`Are you sure you want to delete ${bulk.count} selected category(ies)? This action cannot be undone.`}
+          confirmLabel="Delete All"
+          variant="danger"
+          onConfirm={handleBulkDelete}
+          onCancel={() => setBulkConfirmOpen(false)}
         />
         <ToastContainer toasts={toasts} dismiss={dismiss} />
       </main>

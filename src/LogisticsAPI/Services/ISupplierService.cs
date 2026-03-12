@@ -9,5 +9,6 @@ namespace LogisticsAPI.Services
         Task<SupplierResponse> CreateSupplierAsync(CreateSupplierRequest request);
         Task<SupplierResponse?> UpdateSupplierAsync(int id, CreateSupplierRequest request);
         Task<bool> DeleteSupplierAsync(int id);
+        Task<SupplierPerformanceResponse?> GetSupplierPerformanceAsync(int id);
     }
 }

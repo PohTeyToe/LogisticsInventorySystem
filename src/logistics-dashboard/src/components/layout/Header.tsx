@@ -12,7 +12,9 @@ interface HeaderProps {
   notificationSlot?: ReactNode;
 }
 
-const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(
+  (navigator as { userAgentData?: { platform?: string } }).userAgentData?.platform ?? navigator.platform
+);
 
 export default function Header({ title, showLive = false, subtitle, onSearchClick, onMenuClick, notificationSlot }: HeaderProps) {
   const navigate = useNavigate();

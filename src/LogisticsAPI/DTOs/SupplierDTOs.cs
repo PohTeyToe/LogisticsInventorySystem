@@ -45,4 +45,23 @@ namespace LogisticsAPI.DTOs
         [DataMember]
         public int ActiveOrderCount { get; set; }
     }
+
+    [DataContract]
+    public class SupplierPerformanceResponse
+    {
+        [DataMember]
+        public int TotalOrders { get; set; }
+
+        [DataMember]
+        public int CompletedOrders { get; set; }
+
+        [DataMember]
+        public double OnTimeDeliveryRate { get; set; }
+
+        [DataMember]
+        public double AverageLeadTimeDays { get; set; }
+
+        [DataMember]
+        public decimal TotalSpend { get; set; }
+    }
 }

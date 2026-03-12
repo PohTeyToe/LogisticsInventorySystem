@@ -1,5 +1,6 @@
 using LogisticsAPI.DTOs;
 using LogisticsAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LogisticsAPI.Controllers
@@ -7,6 +8,7 @@ namespace LogisticsAPI.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Produces("application/json", "application/xml")]
+    [Authorize]
     public class ReportController : ControllerBase
     {
         private readonly IReportingService _reportingService;
@@ -38,7 +40,7 @@ namespace LogisticsAPI.Controllers
         public async Task<ActionResult<object>> GetTotalValue()
         {
             var totalValue = await _reportingService.CalculateTotalInventoryValueAsync();
-            return Ok(new { TotalInventoryValue = totalValue });
+            return Ok(new { TotalInventoryValue = totalValue, TotalValue = totalValue });
         }
     }
 }

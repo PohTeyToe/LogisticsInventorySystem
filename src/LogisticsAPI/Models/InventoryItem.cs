@@ -40,6 +40,23 @@ namespace LogisticsAPI.Models
 
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+        [StringLength(100)]
+        public string? LotNumber { get; set; }
+
+        [StringLength(100)]
+        public string? SerialNumber { get; set; }
+
+        public DateTime? ExpiryDate { get; set; }
+
+        [StringLength(20)]
+        public string? UnitOfMeasure { get; set; } = "EA";
+
+        [StringLength(50)]
+        public string? WarehouseZone { get; set; }
+
+        [StringLength(10)]
+        public string? CurrencyCode { get; set; } = "USD";
+
         // Navigation properties
         [ForeignKey("CategoryId")]
         public Category? Category { get; set; }

@@ -1,9 +1,10 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, BarChart3, Package, Tags, Warehouse as WarehouseIcon,
-  Users, ClipboardList, ArrowUpDown, Upload, ChevronDown, TrendingUp, Settings
+  Users, ClipboardList, ArrowUpDown, Upload, ChevronDown, TrendingUp, Settings, History, LogOut
 } from 'lucide-react';
 import { getTenantId } from '../../api/client';
+import { useAuth } from '../../contexts/AuthContext';
 import styles from './Sidebar.module.css';
 
 const navGroups = [
@@ -35,6 +36,7 @@ const navGroups = [
     title: 'Tools',
     items: [
       { to: '/import', icon: Upload, label: 'CSV Import' },
+      { to: '/audit-log', icon: History, label: 'Audit Log' },
       { to: '/settings', icon: Settings, label: 'Settings' },
     ],
   },
@@ -49,7 +51,14 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ lowStockCount, apiLatency, apiConnected = true, mobileOpen, onClose }: SidebarProps) {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const badgeCount = lowStockCount && lowStockCount > 0 ? lowStockCount : undefined;
+
+  function handleLogout() {
+    logout();
+    navigate('/login');
+  }
 
   const sidebarContent = (
     <aside className={`${styles.sidebar} ${mobileOpen ? styles.sidebarOpen : ''}`} aria-label="Main navigation">
@@ -63,7 +72,7 @@ export default function Sidebar({ lowStockCount, apiLatency, apiConnected = true
       <div className={styles.tenantSwitcher}>
         <div className={styles.tenantLabel}>Organization</div>
         <div className={styles.tenantName}>
-          {getTenantId()}
+          Tenant {getTenantId()}
           <ChevronDown size={14} />
         </div>
       </div>
@@ -97,6 +106,20 @@ export default function Sidebar({ lowStockCount, apiLatency, apiConnected = true
       </nav>
 
       <div className={styles.footer}>
+        {user && (
+          <div className={styles.userSection}>
+            <div className={styles.userAvatar}>
+              {(user.fullName || user.email).charAt(0).toUpperCase()}
+            </div>
+            <div className={styles.userInfo}>
+              <div className={styles.userName}>{user.fullName || user.email}</div>
+              <div className={styles.userEmail}>{user.email}</div>
+            </div>
+            <button className={styles.logoutBtn} onClick={handleLogout} title="Sign out">
+              <LogOut size={14} />
+            </button>
+          </div>
+        )}
         <div className={styles.systemStatus}>
           <div className={`${styles.statusDot} ${apiConnected ? styles.connected : styles.disconnected}`} />
           {apiConnected ? `API Connected` : 'Disconnected'}

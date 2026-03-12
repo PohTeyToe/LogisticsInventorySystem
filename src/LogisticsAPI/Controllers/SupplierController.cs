@@ -1,5 +1,6 @@
 using LogisticsAPI.DTOs;
 using LogisticsAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LogisticsAPI.Controllers
@@ -7,6 +8,7 @@ namespace LogisticsAPI.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Produces("application/json", "application/xml")]
+    [Authorize]
     public class SupplierController : ControllerBase
     {
         private readonly ISupplierService _supplierService;
@@ -53,6 +55,16 @@ namespace LogisticsAPI.Controllers
                 return NotFound();
 
             return Ok(supplier);
+        }
+
+        [HttpGet("{id}/performance")]
+        public async Task<ActionResult<SupplierPerformanceResponse>> GetSupplierPerformance(int id)
+        {
+            var performance = await _supplierService.GetSupplierPerformanceAsync(id);
+            if (performance == null)
+                return NotFound();
+
+            return Ok(performance);
         }
 
         [HttpDelete("{id}")]

@@ -1,5 +1,5 @@
 import client from './client';
-import type { Supplier } from '../types';
+import type { Supplier, SupplierPerformance } from '../types';
 
 export async function getSuppliers() {
   const { data } = await client.get<Supplier[]>('/api/supplier');
@@ -18,4 +18,9 @@ export async function updateSupplier(id: number, supplier: { name?: string; cont
 
 export async function deleteSupplier(id: number) {
   await client.delete(`/api/supplier/${id}`);
+}
+
+export async function getSupplierPerformance(id: number) {
+  const { data } = await client.get<SupplierPerformance>(`/api/supplier/${id}/performance`);
+  return data;
 }

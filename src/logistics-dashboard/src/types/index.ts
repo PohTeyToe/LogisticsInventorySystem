@@ -14,7 +14,7 @@ export interface InventoryItem {
   name: string;
   description: string;
   quantity: number;
-  location: string;
+  location: string | null;
   unitPrice: number;
   categoryId: number;
   categoryName: string;
@@ -23,6 +23,12 @@ export interface InventoryItem {
   reorderLevel: number;
   createdAt: string;
   updatedAt: string;
+  lotNumber: string | null;
+  serialNumber: string | null;
+  expiryDate: string | null;
+  unitOfMeasure: string | null;
+  warehouseZone: string | null;
+  currencyCode: string | null;
 }
 
 export interface CreateInventoryItemRequest {
@@ -35,6 +41,12 @@ export interface CreateInventoryItemRequest {
   categoryId: number;
   warehouseId: number;
   reorderLevel: number;
+  lotNumber?: string;
+  serialNumber?: string;
+  expiryDate?: string;
+  unitOfMeasure?: string;
+  warehouseZone?: string;
+  currencyCode?: string;
 }
 
 export interface UpdateInventoryItemRequest {
@@ -47,6 +59,12 @@ export interface UpdateInventoryItemRequest {
   categoryId?: number;
   warehouseId?: number;
   reorderLevel?: number;
+  lotNumber?: string;
+  serialNumber?: string;
+  expiryDate?: string;
+  unitOfMeasure?: string;
+  warehouseZone?: string;
+  currencyCode?: string;
 }
 
 export interface LowStockAlert {
@@ -93,6 +111,14 @@ export interface Supplier {
   activeOrderCount: number;
 }
 
+export interface SupplierPerformance {
+  totalOrders: number;
+  completedOrders: number;
+  onTimeDeliveryRate: number;
+  averageLeadTimeDays: number;
+  totalSpend: number;
+}
+
 export type PurchaseOrderStatus = 'Pending' | 'Approved' | 'Shipped' | 'Received' | 'Cancelled';
 
 export interface PurchaseOrder {
@@ -109,8 +135,10 @@ export interface PurchaseOrderItem {
   purchaseOrderId: number;
   inventoryItemId?: number;
   itemName: string;
+  itemSKU: string;
   quantity: number;
   unitPrice: number;
+  lineTotal: number;
 }
 
 export type StockMovementType = 'IN' | 'OUT' | 'ADJUSTMENT';
@@ -123,6 +151,7 @@ export interface StockMovement {
   quantity: number;
   reason: string;
   timestamp: string;
+  movementReasonCode: string | null;
 }
 
 export interface ImportResult {
@@ -156,4 +185,25 @@ export interface WarehouseValuation {
   warehouseName: string;
   itemCount: number;
   totalValue: number;
+}
+
+export type AuditAction = 'Create' | 'Update' | 'Delete';
+
+export interface AuditLogEntry {
+  id: number;
+  entityType: string;
+  entityId: number;
+  action: AuditAction;
+  changes: string | null;
+  userId: string | null;
+  timestamp: string;
+  tenantId: number;
+}
+
+export interface PaginatedAuditLogResponse {
+  items: AuditLogEntry[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 }

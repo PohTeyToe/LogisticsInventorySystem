@@ -25,7 +25,7 @@ namespace LogisticsAPI.Services
                     ContactEmail = s.ContactEmail,
                     Phone = s.Phone,
                     Address = s.Address,
-                    ActiveOrderCount = s.PurchaseOrders.Count(po => po.Status != "Cancelled" && po.Status != "Received")
+                    ActiveOrderCount = s.PurchaseOrders.Count(po => po.Status != PurchaseOrderStatus.Cancelled && po.Status != PurchaseOrderStatus.Delivered)
                 })
                 .ToListAsync();
         }
@@ -46,7 +46,7 @@ namespace LogisticsAPI.Services
                 ContactEmail = supplier.ContactEmail,
                 Phone = supplier.Phone,
                 Address = supplier.Address,
-                ActiveOrderCount = supplier.PurchaseOrders.Count(po => po.Status != "Cancelled" && po.Status != "Received")
+                ActiveOrderCount = supplier.PurchaseOrders.Count(po => po.Status != PurchaseOrderStatus.Cancelled && po.Status != PurchaseOrderStatus.Delivered)
             };
         }
 
@@ -94,7 +94,7 @@ namespace LogisticsAPI.Services
                 Phone = supplier.Phone,
                 Address = supplier.Address,
                 ActiveOrderCount = await _context.PurchaseOrders.CountAsync(
-                    po => po.SupplierId == id && po.Status != "Cancelled" && po.Status != "Received")
+                    po => po.SupplierId == id && po.Status != PurchaseOrderStatus.Cancelled && po.Status != PurchaseOrderStatus.Delivered)
             };
         }
 
@@ -107,12 +107,60 @@ namespace LogisticsAPI.Services
             if (supplier == null)
                 return false;
 
-            if (supplier.PurchaseOrders.Any(po => po.Status != "Cancelled" && po.Status != "Received"))
+            if (supplier.PurchaseOrders.Any(po => po.Status != PurchaseOrderStatus.Cancelled && po.Status != PurchaseOrderStatus.Delivered))
                 throw new InvalidOperationException("Cannot delete supplier with active purchase orders.");
 
             _context.Suppliers.Remove(supplier);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<SupplierPerformanceResponse?> GetSupplierPerformanceAsync(int id)
+        {
+            var supplier = await _context.Suppliers.FindAsync(id);
+            if (supplier == null)
+                return null;
+
+            var orders = await _context.PurchaseOrders
+                .Where(po => po.SupplierId == id)
+                .ToListAsync();
+
+            var totalOrders = orders.Count;
+            var completedOrders = orders.Count(po => po.Status == PurchaseOrderStatus.Delivered);
+
+            var deliveredWithExpected = orders
+                .Where(po => po.Status == PurchaseOrderStatus.Delivered
+                    && po.ExpectedDeliveryDate.HasValue
+                    && po.DeliveredDate.HasValue)
+                .ToList();
+
+            var onTimeCount = deliveredWithExpected
+                .Count(po => po.DeliveredDate!.Value <= po.ExpectedDeliveryDate!.Value);
+
+            var onTimeDeliveryRate = deliveredWithExpected.Count > 0
+                ? Math.Round((double)onTimeCount / deliveredWithExpected.Count * 100, 1)
+                : 0;
+
+            var deliveredOrders = orders
+                .Where(po => po.Status == PurchaseOrderStatus.Delivered && po.DeliveredDate.HasValue)
+                .ToList();
+
+            var averageLeadTimeDays = deliveredOrders.Count > 0
+                ? Math.Round(deliveredOrders.Average(po => (po.DeliveredDate!.Value - po.OrderDate).TotalDays), 1)
+                : 0;
+
+            var totalSpend = orders
+                .Where(po => po.Status == PurchaseOrderStatus.Delivered)
+                .Sum(po => po.TotalAmount);
+
+            return new SupplierPerformanceResponse
+            {
+                TotalOrders = totalOrders,
+                CompletedOrders = completedOrders,
+                OnTimeDeliveryRate = onTimeDeliveryRate,
+                AverageLeadTimeDays = averageLeadTimeDays,
+                TotalSpend = totalSpend
+            };
         }
     }
 }

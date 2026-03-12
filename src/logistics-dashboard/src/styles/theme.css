@@ -28,6 +28,16 @@
   --amber: #F59E0B;
   --amber-dim: rgba(245, 158, 11, 0.12);
 
+  /* Chart palette — keep in sync with CHART_COLORS in Analytics.tsx / Reports.tsx */
+  --chart-color-1: #00D4AA;  /* teal   */
+  --chart-color-2: #58A6FF;  /* blue   */
+  --chart-color-3: #F59E0B;  /* amber  */
+  --chart-color-4: #3FB950;  /* green  */
+  --chart-color-5: #F85149;  /* red    */
+  --chart-color-6: #A371F7;  /* purple */
+  --chart-color-7: #D2A8FF;  /* lilac  */
+  --chart-color-8: #8B949E;  /* grey   */
+
   --font-data: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
   --font-ui: 'DM Sans', -apple-system, sans-serif;
 

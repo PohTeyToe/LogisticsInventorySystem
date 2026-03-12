@@ -1,5 +1,6 @@
 using LogisticsAPI.DTOs;
 using LogisticsAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LogisticsAPI.Controllers
@@ -7,6 +8,7 @@ namespace LogisticsAPI.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Produces("application/json", "application/xml")]
+    [Authorize]
     public class ReservationsController : ControllerBase
     {
         private readonly IReservationService _reservationService;

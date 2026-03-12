@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Plus, Trash2, Edit3, Download } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Plus, Trash2, Edit3, Download, Search } from 'lucide-react';
 import Header from '../components/layout/Header';
 import Card from '../components/shared/Card';
 import Button from '../components/shared/Button';
@@ -8,30 +8,56 @@ import FormField from '../components/shared/FormField';
 import StatusBadge from '../components/shared/StatusBadge';
 import SkeletonTable from '../components/shared/SkeletonTable';
 import ToastContainer from '../components/shared/ToastContainer';
-import { getWarehouses, createWarehouse, updateWarehouse, deleteWarehouse } from '../api/warehouses';
-import { exportToCsv } from '../utils/exportCsv';
+import Pagination from '../components/shared/Pagination';
+import BulkActionBar from '../components/shared/BulkActionBar';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
+import { useWarehousesList, useCreateWarehouse, useUpdateWarehouse, useDeleteWarehouse } from '../hooks/queries/useWarehouseQueries';
+import { exportToCsv } from '../utils/exportCsv';
 import { useToast } from '../hooks/useToastSimple';
+import { useBulkSelect } from '../hooks/useBulkSelect';
+import { useTableSort } from '../hooks/useTableSort';
+import { usePagination } from '../hooks/usePagination';
 import type { Warehouse } from '../types';
 import styles from './CrudPage.module.css';
 
+type SortKey = 'name' | 'address' | 'capacity';
+
+const accessor = (item: Warehouse, key: SortKey) => {
+  switch (key) {
+    case 'name': return item.name;
+    case 'address': return item.address || '';
+    case 'capacity': return item.capacity;
+  }
+};
+
 export default function Warehouses() {
-  const [items, setItems] = useState<Warehouse[]>([]);
-  const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Warehouse | null>(null);
   const [form, setForm] = useState({ name: '', address: '', capacity: 100 });
+  const [search, setSearch] = useState('');
   const { toasts, addToast, dismiss } = useToast();
   const [confirmDelete, setConfirmDelete] = useState<{ id: number; name: string } | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try { setItems(await getWarehouses()); }
-    catch (err) { console.error(err); }
-    finally { setLoading(false); }
-  }, []);
+  // Bulk select
+  const bulk = useBulkSelect();
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
 
-  useEffect(() => { load(); }, [load]);
+  const { data: items = [], isLoading: loading } = useWarehousesList();
+  const createMutation = useCreateWarehouse();
+  const updateMutation = useUpdateWarehouse();
+  const deleteMutation = useDeleteWarehouse();
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return items;
+    const q = search.toLowerCase();
+    return items.filter((i) =>
+      i.name.toLowerCase().includes(q) ||
+      (i.address && i.address.toLowerCase().includes(q))
+    );
+  }, [items, search]);
+
+  const { sortedItems, toggleSort, getSortIndicator } = useTableSort<Warehouse, SortKey>(filtered, accessor);
+  const { paginatedItems, page, pageSize, totalPages, setPage, setPageSize, startIndex, endIndex, totalItems } = usePagination(sortedItems);
 
   const openCreate = () => { setEditing(null); setForm({ name: '', address: '', capacity: 100 }); setModalOpen(true); };
   const openEdit = (item: Warehouse) => { setEditing(item); setForm({ name: item.name, address: item.address, capacity: item.capacity }); setModalOpen(true); };
@@ -43,14 +69,13 @@ export default function Warehouses() {
     }
     try {
       if (editing) {
-        await updateWarehouse(editing.id, form);
+        await updateMutation.mutateAsync({ id: editing.id, warehouse: form });
         addToast('Warehouse updated successfully', 'success');
       } else {
-        await createWarehouse(form);
+        await createMutation.mutateAsync(form);
         addToast('Warehouse created successfully', 'success');
       }
       setModalOpen(false);
-      load();
     } catch (err) {
       console.error(err);
       addToast('Failed to save warehouse', 'danger');
@@ -59,13 +84,24 @@ export default function Warehouses() {
 
   const handleDelete = async (id: number) => {
     try {
-      await deleteWarehouse(id);
+      await deleteMutation.mutateAsync(id);
       addToast('Warehouse deleted successfully', 'success');
       setConfirmDelete(null);
-      load();
     } catch (err) {
       console.error(err);
       addToast('Failed to delete warehouse', 'danger');
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      await Promise.all([...bulk.selectedIds].map((id) => deleteMutation.mutateAsync(id)));
+      addToast(`${bulk.count} warehouse(s) deleted successfully`, 'success');
+      bulk.clearSelection();
+      setBulkConfirmOpen(false);
+    } catch (err) {
+      console.error(err);
+      addToast('Failed to delete some warehouses', 'danger');
     }
   };
 
@@ -83,7 +119,15 @@ export default function Warehouses() {
       <Header title="Warehouses" />
       <main className={styles.content}>
         <div className={styles.toolbar}>
-          <div />
+          <div className={styles.searchWrap}>
+            <Search size={14} className={styles.searchIcon} />
+            <input
+              className={styles.searchInput}
+              placeholder="Search warehouses..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            />
+          </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <Button variant="ghost" size="sm" onClick={handleExport}>
               <Download size={14} /> Export
@@ -92,23 +136,63 @@ export default function Warehouses() {
           </div>
         </div>
 
-        <Card title="All Warehouses" count={items.length} noPadding>
+        <BulkActionBar count={bulk.count} onDelete={() => setBulkConfirmOpen(true)} onClear={bulk.clearSelection} />
+
+        <Card title="All Warehouses" count={totalItems} noPadding>
+          <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
-              <tr><th>Name</th><th>Address</th><th>Capacity</th><th>Status</th><th></th></tr>
+              <tr>
+                <th className={styles.checkboxCell}>
+                  <input
+                    type="checkbox"
+                    className={styles.checkbox}
+                    checked={bulk.isAllSelected(paginatedItems.map((i) => i.id))}
+                    onChange={() => bulk.toggleSelectAll(paginatedItems.map((i) => i.id))}
+                  />
+                </th>
+                <th className={styles.sortable} onClick={() => toggleSort('name')}>Name{getSortIndicator('name')}</th>
+                <th className={`${styles.sortable} ${styles.hideMobile}`} onClick={() => toggleSort('address')}>Address{getSortIndicator('address')}</th>
+                <th className={styles.sortable} onClick={() => toggleSort('capacity')}>Capacity{getSortIndicator('capacity')}</th>
+                <th>Utilization</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
             </thead>
             {loading ? (
-              <SkeletonTable rows={5} cols={5} />
+              <SkeletonTable rows={5} cols={7} />
             ) : (
             <tbody>
-              {items.length === 0 && (
-                <tr><td colSpan={5} className={styles.empty}>No warehouses found</td></tr>
+              {paginatedItems.length === 0 && (
+                <tr><td colSpan={7} className={styles.empty}>No warehouses found</td></tr>
               )}
-              {items.map((item) => (
-                <tr key={item.id}>
+              {paginatedItems.map((item) => (
+                <tr key={item.id} className={bulk.isSelected(item.id) ? styles.rowSelected : ''}>
+                  <td className={styles.checkboxCell}>
+                    <input
+                      type="checkbox"
+                      className={styles.checkbox}
+                      checked={bulk.isSelected(item.id)}
+                      onChange={() => bulk.toggleSelect(item.id)}
+                    />
+                  </td>
                   <td className={styles.primary}>{item.name}</td>
-                  <td>{item.address || '-'}</td>
+                  <td className={styles.hideMobile}>{item.address || '-'}</td>
                   <td className={styles.mono}>{item.capacity.toLocaleString()}</td>
+                  <td>
+                    <div className={styles.utilBarWrap}>
+                      <div className={styles.utilBarBg}>
+                        <div
+                          className={`${styles.utilBarFill} ${
+                            item.utilizationPercentage > 85 ? styles.utilHigh :
+                            item.utilizationPercentage > 60 ? styles.utilMid : styles.utilLow
+                          }`}
+                          style={{ width: `${Math.min(item.utilizationPercentage, 100)}%` }}
+                        />
+                      </div>
+                      <span className={styles.mono}>{Math.round(item.utilizationPercentage)}%</span>
+                    </div>
+                  </td>
                   <td>
                     <StatusBadge variant={item.isActive ? 'success' : 'danger'}>
                       {item.isActive ? 'Active' : 'Inactive'}
@@ -125,6 +209,12 @@ export default function Warehouses() {
             </tbody>
             )}
           </table>
+          </div>
+          <Pagination
+            page={page} totalPages={totalPages} pageSize={pageSize}
+            totalItems={totalItems} startIndex={startIndex} endIndex={endIndex}
+            onPageChange={setPage} onPageSizeChange={setPageSize}
+          />
         </Card>
 
         <Modal title={editing ? 'Edit Warehouse' : 'Add Warehouse'} open={modalOpen} onClose={() => setModalOpen(false)}
@@ -141,6 +231,15 @@ export default function Warehouses() {
           variant="danger"
           onConfirm={() => confirmDelete && handleDelete(confirmDelete.id)}
           onCancel={() => setConfirmDelete(null)}
+        />
+        <ConfirmDialog
+          open={bulkConfirmOpen}
+          title="Delete Selected Warehouses"
+          message={`Are you sure you want to delete ${bulk.count} selected warehouse(s)? This action cannot be undone.`}
+          confirmLabel="Delete All"
+          variant="danger"
+          onConfirm={handleBulkDelete}
+          onCancel={() => setBulkConfirmOpen(false)}
         />
         <ToastContainer toasts={toasts} dismiss={dismiss} />
       </main>

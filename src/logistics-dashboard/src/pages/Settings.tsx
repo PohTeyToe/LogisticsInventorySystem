@@ -115,9 +115,9 @@ export default function Settings() {
               <div className={styles.preview}>
                 <div className={styles.previewCard} data-preview={theme}>
                   <div className={styles.previewHeader}>
-                    <div className={styles.previewDot} style={{ background: '#F85149' }} />
-                    <div className={styles.previewDot} style={{ background: '#F59E0B' }} />
-                    <div className={styles.previewDot} style={{ background: '#3FB950' }} />
+                    <div className={styles.previewDot} style={{ background: 'var(--status-danger)' }} />
+                    <div className={styles.previewDot} style={{ background: 'var(--amber)' }} />
+                    <div className={styles.previewDot} style={{ background: 'var(--status-success)' }} />
                   </div>
                   <div className={styles.previewBody}>
                     <div className={styles.previewSidebar}>
@@ -229,8 +229,8 @@ export default function Settings() {
                 <code className={styles.configValue}>{apiUrl}</code>
               </div>
               <div className={styles.configRow}>
-                <span className={styles.configLabel}>Tenant ID</span>
-                <code className={styles.configValue}>{tenantId}</code>
+                <span className={styles.configLabel}>Tenant</span>
+                <code className={styles.configValue}>Tenant {tenantId}</code>
               </div>
               <div className={styles.configRow}>
                 <span className={styles.configLabel}>Connectivity</span>
@@ -275,7 +275,7 @@ export default function Settings() {
                     </div>
                     <div className={styles.configRow}>
                       <span className={styles.configLabel}>Frontend</span>
-                      <span className={styles.configValue}>React 18 + TypeScript + Vite</span>
+                      <span className={styles.configValue}>React 19 + TypeScript + Vite</span>
                     </div>
                     <div className={styles.configRow}>
                       <span className={styles.configLabel}>Backend</span>

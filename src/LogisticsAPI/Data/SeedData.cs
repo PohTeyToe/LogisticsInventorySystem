@@ -131,7 +131,7 @@ namespace LogisticsAPI.Data
                 {
                     SupplierId = suppliers[0].Id, // Acme Industrial
                     OrderDate = now.AddDays(-14),
-                    Status = "Received",
+                    Status = PurchaseOrderStatus.Delivered,
                     TotalAmount = 1362.00m,
                     TenantId = tenantId,
                     Items = new List<PurchaseOrderItem>
@@ -145,7 +145,7 @@ namespace LogisticsAPI.Data
                 {
                     SupplierId = suppliers[1].Id, // Pacific Metals
                     OrderDate = now.AddDays(-7),
-                    Status = "Shipped",
+                    Status = PurchaseOrderStatus.Shipped,
                     TotalAmount = 2821.00m,
                     TenantId = tenantId,
                     Items = new List<PurchaseOrderItem>
@@ -158,7 +158,7 @@ namespace LogisticsAPI.Data
                 {
                     SupplierId = suppliers[2].Id, // Bright Star
                     OrderDate = now.AddDays(-5),
-                    Status = "Approved",
+                    Status = PurchaseOrderStatus.Approved,
                     TotalAmount = 4042.00m,
                     TenantId = tenantId,
                     Items = new List<PurchaseOrderItem>
@@ -172,7 +172,7 @@ namespace LogisticsAPI.Data
                 {
                     SupplierId = suppliers[3].Id, // SafeGuard
                     OrderDate = now.AddDays(-2),
-                    Status = "Pending",
+                    Status = PurchaseOrderStatus.Pending,
                     TotalAmount = 2543.50m,
                     TenantId = tenantId,
                     Items = new List<PurchaseOrderItem>
@@ -186,7 +186,7 @@ namespace LogisticsAPI.Data
                 {
                     SupplierId = suppliers[4].Id, // PackRight
                     OrderDate = now.AddDays(-1),
-                    Status = "Pending",
+                    Status = PurchaseOrderStatus.Pending,
                     TotalAmount = 2100.80m,
                     TenantId = tenantId,
                     Items = new List<PurchaseOrderItem>
@@ -200,7 +200,7 @@ namespace LogisticsAPI.Data
                 {
                     SupplierId = suppliers[0].Id, // Acme Industrial
                     OrderDate = now.AddDays(-21),
-                    Status = "Received",
+                    Status = PurchaseOrderStatus.Delivered,
                     TotalAmount = 756.00m,
                     TenantId = tenantId,
                     Items = new List<PurchaseOrderItem>

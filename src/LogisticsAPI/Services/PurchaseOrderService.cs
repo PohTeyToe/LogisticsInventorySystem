@@ -8,10 +8,12 @@ namespace LogisticsAPI.Services
     public class PurchaseOrderService : IPurchaseOrderService
     {
         private readonly ApplicationDbContext _context;
+        private readonly INotificationService _notificationService;
 
-        public PurchaseOrderService(ApplicationDbContext context)
+        public PurchaseOrderService(ApplicationDbContext context, INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<IEnumerable<PurchaseOrderResponse>> GetAllOrdersAsync(string? status = null)
@@ -22,8 +24,8 @@ namespace LogisticsAPI.Services
                     .ThenInclude(i => i.InventoryItem)
                 .AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(status))
-                query = query.Where(po => po.Status == status);
+            if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<PurchaseOrderStatus>(status, true, out var parsedStatus))
+                query = query.Where(po => po.Status == parsedStatus);
 
             var orders = await query
                 .OrderByDescending(po => po.OrderDate)
@@ -52,7 +54,7 @@ namespace LogisticsAPI.Services
             var order = new PurchaseOrder
             {
                 SupplierId = request.SupplierId,
-                Status = "Pending",
+                Status = PurchaseOrderStatus.Pending,
                 OrderDate = DateTime.UtcNow
             };
 
@@ -80,6 +82,8 @@ namespace LogisticsAPI.Services
             foreach (var item in order.Items)
                 await _context.Entry(item).Reference(i => i.InventoryItem).LoadAsync();
 
+            await _notificationService.NotifyPurchaseOrderUpdatedAsync(order.Id, order.Status.ToString());
+
             return MapToResponse(order);
         }
 
@@ -94,12 +98,13 @@ namespace LogisticsAPI.Services
             if (order == null)
                 return null;
 
-            var validTransitions = new Dictionary<string, string[]>
+            var validTransitions = new Dictionary<PurchaseOrderStatus, PurchaseOrderStatus[]>
             {
-                ["Pending"] = new[] { "Approved", "Cancelled" },
-                ["Approved"] = new[] { "Received", "Cancelled" },
-                ["Received"] = Array.Empty<string>(),
-                ["Cancelled"] = Array.Empty<string>()
+                [PurchaseOrderStatus.Pending] = new[] { PurchaseOrderStatus.Approved, PurchaseOrderStatus.Cancelled },
+                [PurchaseOrderStatus.Approved] = new[] { PurchaseOrderStatus.Shipped, PurchaseOrderStatus.Cancelled },
+                [PurchaseOrderStatus.Shipped] = new[] { PurchaseOrderStatus.Delivered, PurchaseOrderStatus.Cancelled },
+                [PurchaseOrderStatus.Delivered] = Array.Empty<PurchaseOrderStatus>(),
+                [PurchaseOrderStatus.Cancelled] = Array.Empty<PurchaseOrderStatus>()
             };
 
             if (!validTransitions.ContainsKey(order.Status) ||
@@ -110,8 +115,8 @@ namespace LogisticsAPI.Services
 
             order.Status = request.Status;
 
-            // When order is received, update inventory quantities
-            if (request.Status == "Received")
+            // When order is delivered, update inventory quantities
+            if (request.Status == PurchaseOrderStatus.Delivered)
             {
                 foreach (var item in order.Items)
                 {
@@ -125,6 +130,20 @@ namespace LogisticsAPI.Services
 
             await _context.SaveChangesAsync();
 
+            await _notificationService.NotifyPurchaseOrderUpdatedAsync(order.Id, order.Status.ToString());
+
+            // If delivered, inventory quantities changed — notify for each item
+            if (request.Status == PurchaseOrderStatus.Delivered)
+            {
+                foreach (var item in order.Items)
+                {
+                    if (item.InventoryItem != null)
+                    {
+                        await _notificationService.NotifyInventoryChangedAsync(item.InventoryItemId, "PurchaseOrderDelivered");
+                    }
+                }
+            }
+
             return MapToResponse(order);
         }
 
@@ -134,8 +153,8 @@ namespace LogisticsAPI.Services
             if (order == null)
                 return false;
 
-            if (order.Status == "Received")
-                throw new InvalidOperationException("Cannot delete a received order.");
+            if (order.Status == PurchaseOrderStatus.Delivered)
+                throw new InvalidOperationException("Cannot delete a delivered order.");
 
             _context.PurchaseOrders.Remove(order);
             await _context.SaveChangesAsync();

@@ -21,6 +21,7 @@ namespace LogisticsAPI.Tests
             };
 
             var result = await repo.AddAsync(item);
+            await context.SaveChangesAsync();
 
             Assert.True(result.Id > 0);
             Assert.Equal("ADD-001", result.SKU);
@@ -34,6 +35,7 @@ namespace LogisticsAPI.Tests
 
             var item = new InventoryItem { SKU = "GET-001", Name = "Get Item", Quantity = 5 };
             await repo.AddAsync(item);
+            await context.SaveChangesAsync();
 
             var result = await repo.GetByIdAsync(item.Id);
 
@@ -49,8 +51,10 @@ namespace LogisticsAPI.Tests
 
             var item = new InventoryItem { SKU = "DEL-001", Name = "Delete Item" };
             await repo.AddAsync(item);
+            await context.SaveChangesAsync();
 
             await repo.DeleteAsync(item);
+            await context.SaveChangesAsync();
             var result = await repo.GetByIdAsync(item.Id);
 
             Assert.Null(result);
@@ -65,6 +69,7 @@ namespace LogisticsAPI.Tests
             await repo.AddAsync(new InventoryItem { SKU = "FIND-001", Name = "Alpha", Quantity = 10 });
             await repo.AddAsync(new InventoryItem { SKU = "FIND-002", Name = "Beta", Quantity = 5 });
             await repo.AddAsync(new InventoryItem { SKU = "FIND-003", Name = "Alpha Plus", Quantity = 20 });
+            await context.SaveChangesAsync();
 
             var results = await repo.FindAsync(i => i.Name.Contains("Alpha"));
 
@@ -79,6 +84,7 @@ namespace LogisticsAPI.Tests
 
             var item = new InventoryItem { SKU = "EX-001", Name = "Exists Item" };
             await repo.AddAsync(item);
+            await context.SaveChangesAsync();
 
             Assert.True(await repo.ExistsAsync(item.Id));
             Assert.False(await repo.ExistsAsync(999));
@@ -93,6 +99,7 @@ namespace LogisticsAPI.Tests
             await repo.AddAsync(new InventoryItem { SKU = "CNT-001", Name = "Count 1" });
             await repo.AddAsync(new InventoryItem { SKU = "CNT-002", Name = "Count 2" });
             await repo.AddAsync(new InventoryItem { SKU = "CNT-003", Name = "Count 3" });
+            await context.SaveChangesAsync();
 
             Assert.Equal(3, await repo.CountAsync());
         }
@@ -106,6 +113,7 @@ namespace LogisticsAPI.Tests
             await repo.AddAsync(new InventoryItem { SKU = "SRCH-001", Name = "Wireless Mouse" });
             await repo.AddAsync(new InventoryItem { SKU = "SRCH-002", Name = "Wired Keyboard" });
             await repo.AddAsync(new InventoryItem { SKU = "MOUSE-003", Name = "Gaming Pad" });
+            await context.SaveChangesAsync();
 
             var results = await repo.SearchAsync("mouse");
 
@@ -119,6 +127,7 @@ namespace LogisticsAPI.Tests
             var repo = new InventoryRepository(context);
 
             await repo.AddAsync(new InventoryItem { SKU = "SKU-001", Name = "By SKU Item" });
+            await context.SaveChangesAsync();
 
             var result = await repo.GetBySkuAsync("SKU-001");
 

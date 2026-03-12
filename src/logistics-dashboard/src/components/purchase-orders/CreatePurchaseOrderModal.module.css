@@ -1,0 +1,157 @@
+.formSection {
+  margin-bottom: 16px;
+}
+
+.sectionLabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.selectField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.select {
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: var(--font-ui);
+  outline: none;
+  width: 100%;
+}
+
+.select:focus {
+  border-color: var(--accent-teal);
+}
+
+.lineItems {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lineItemRow {
+  display: grid;
+  grid-template-columns: 1fr 80px 100px 32px;
+  gap: 8px;
+  align-items: end;
+}
+
+.lineInput {
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: var(--font-ui);
+  outline: none;
+  width: 100%;
+}
+
+.lineInput:focus {
+  border-color: var(--accent-teal);
+}
+
+.lineInput::placeholder {
+  color: var(--text-muted);
+}
+
+.lineFieldLabel {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.lineFieldGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.removeBtn {
+  width: 32px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.removeBtn:hover {
+  border-color: var(--status-danger);
+  color: var(--status-danger);
+}
+
+.addLineBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.addLineBtn:hover {
+  border-color: var(--accent-teal);
+  color: var(--accent-teal);
+  background: var(--accent-teal-dim);
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0 0;
+  margin-top: 8px;
+  border-top: 1px solid var(--border-muted);
+}
+
+.totalLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.totalValue {
+  font-family: var(--font-data);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent-teal);
+}
+
+.errorText {
+  font-size: 11px;
+  color: var(--status-danger);
+  margin-top: 4px;
+}

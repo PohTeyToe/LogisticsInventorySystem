@@ -181,8 +181,132 @@
   font-size: 13px;
 }
 
+/* Low stock actions */
+.alertActions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
 .heatmapSection {
   margin-top: 20px;
+}
+
+/* Grid layout controls */
+.gridControls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  justify-content: flex-end;
+}
+
+.gridLayout {
+  margin: 0 -16px;
+}
+
+.gridWidget {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.gridWidget > :last-child {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.widgetDragHandle {
+  height: 4px;
+  cursor: grab;
+  border-radius: 2px;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.gridLocked .widgetDragHandle {
+  display: none;
+}
+
+.widgetDragHandle:hover {
+  background: var(--border-subtle);
+}
+
+.widgetDragHandle:active {
+  cursor: grabbing;
+  background: var(--accent-teal);
+}
+
+/* Override react-grid-layout placeholder */
+:global(.react-grid-placeholder) {
+  background: var(--accent-teal) !important;
+  opacity: 0.15 !important;
+  border-radius: var(--radius-md);
+}
+
+/* Override react-resizable handle */
+:global(.react-resizable-handle) {
+  background-image: none !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+
+:global(.react-resizable-handle::after) {
+  content: '';
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--border-subtle);
+  border-bottom: 2px solid var(--border-subtle);
+  border-radius: 0 0 2px 0;
+}
+
+/* Connection status indicator */
+.connectionBar {
+  padding: 0 24px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.connectionStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  font-family: var(--font-data);
+}
+
+.connectionDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.connectionDot.connected {
+  background: var(--status-success);
+  box-shadow: 0 0 6px var(--status-success);
+}
+
+.connectionDot.reconnecting,
+.connectionDot.connecting {
+  background: var(--amber);
+  box-shadow: 0 0 6px var(--amber);
+  animation: pulse 1.5s ease infinite;
+}
+
+.connectionDot.disconnected {
+  background: var(--text-muted);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
 @keyframes slideUp {
@@ -201,8 +325,16 @@
   .contentGridWithFeed { grid-template-columns: 1fr; }
 }
 
+.tableWrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.hideMobile {}
+
 @media (max-width: 640px) {
   .kpiRow { grid-template-columns: 1fr; }
   .content { padding: 12px; }
   .pipeline { flex-direction: column; }
+  .hideMobile { display: none; }
 }

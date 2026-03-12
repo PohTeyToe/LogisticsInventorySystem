@@ -1,0 +1,40 @@
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.dataTable thead th {
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  font-weight: 600;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-muted);
+  white-space: nowrap;
+}
+
+.dataTable tbody tr {
+  border-bottom: 1px solid var(--border-muted);
+  transition: background 0.1s;
+}
+
+.dataTable tbody tr:last-child { border-bottom: none; }
+.dataTable tbody tr:hover { background: var(--bg-elevated); }
+
+.dataTable td {
+  padding: 10px 16px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.mono { font-family: var(--font-data); font-size: 12px; }
+.primaryText { color: var(--text-primary) !important; font-weight: 500; }
+.empty { text-align: center; padding: 40px 20px !important; color: var(--text-muted); }
+
+.positive { color: var(--status-success) !important; }
+.negative { color: var(--status-danger) !important; }
+.neutral { color: var(--text-muted) !important; }
