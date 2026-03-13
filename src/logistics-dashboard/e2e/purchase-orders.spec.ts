@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Purchase Orders Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/purchase-orders');
+    await page.waitForLoadState('networkidle');
   });
 
   test('page loads and shows heading', async ({ page }) => {

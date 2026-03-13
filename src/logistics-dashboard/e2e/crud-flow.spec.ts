@@ -6,6 +6,7 @@ test.describe('Category CRUD Flow', () => {
   test('create, verify, edit, and delete a category', async ({ page }) => {
     await page.goto('/categories');
     await page.waitForLoadState('networkidle');
+    await expect(page.locator('table tbody tr').first()).toBeVisible({ timeout: 10_000 });
 
     // --- Create ---
     await page.getByRole('button', { name: /add category/i }).click();

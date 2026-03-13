@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+const API_TARGET = process.env.VITE_PROXY_TARGET || 'http://localhost:5081'
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
@@ -17,14 +19,14 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://logistics-inventory-api-abdallah.azurewebsites.net',
+        target: API_TARGET,
         changeOrigin: true,
-        secure: true,
+        secure: false,
       },
       '/hubs': {
-        target: 'https://logistics-inventory-api-abdallah.azurewebsites.net',
+        target: API_TARGET,
         changeOrigin: true,
-        secure: true,
+        secure: false,
         ws: true,
       },
     },

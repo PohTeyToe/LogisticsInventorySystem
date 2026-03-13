@@ -1,7 +1,7 @@
 import { test as setup } from '@playwright/test';
 
 const TEST_USER = { email: 'e2e@test.com', password: 'E2eTestPass123' };
-const API_URL = 'http://localhost:5063';
+const API_URL = 'http://localhost:5081';
 
 setup('authenticate', async ({ page }) => {
   // Register test user (ignore conflict if already exists)

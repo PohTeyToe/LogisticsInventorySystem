@@ -22,7 +22,8 @@ test.describe('Sidebar Navigation', () => {
     for (const link of sidebarLinks) {
       const nav = page.locator('aside[aria-label="Main navigation"] nav');
       await nav.getByText(link.label, { exact: true }).click();
-      await page.waitForURL(link.path);
+      await page.waitForURL(`**${link.path}`, { timeout: 10_000 });
+      await page.waitForLoadState('networkidle');
       // Page should have some content — not a blank page
       await expect(page.locator('main')).toBeVisible();
     }
