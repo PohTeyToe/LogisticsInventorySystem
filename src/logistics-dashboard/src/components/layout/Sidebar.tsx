@@ -4,7 +4,7 @@ import {
   Users, ClipboardList, ArrowUpDown, Upload, ChevronDown, TrendingUp, Settings, History, LogOut
 } from 'lucide-react';
 import { getTenantId } from '../../api/client';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import styles from './Sidebar.module.css';
 
 const navGroups = [

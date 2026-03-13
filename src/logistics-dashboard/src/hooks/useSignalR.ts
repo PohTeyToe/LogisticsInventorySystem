@@ -20,7 +20,6 @@ export interface UseSignalROptions {
 }
 
 export interface UseSignalRReturn {
-  connection: HubConnection | null;
   status: ConnectionStatus;
   /** Subscribe to a hub event. Returns an unsubscribe function. */
   on: (event: string, handler: (...args: unknown[]) => void) => () => void;
@@ -36,7 +35,7 @@ export function useSignalR(options: UseSignalROptions = {}): UseSignalRReturn {
     mountedRef.current = true;
     if (!autoConnect) return;
 
-    const connection = new HubConnectionBuilder()
+    const conn = new HubConnectionBuilder()
       .withUrl(HUB_URL, {
         accessTokenFactory: () => localStorage.getItem('auth_token') || '',
       })
@@ -44,23 +43,21 @@ export function useSignalR(options: UseSignalROptions = {}): UseSignalRReturn {
       .configureLogging(LogLevel.Warning)
       .build();
 
-    connectionRef.current = connection;
+    connectionRef.current = conn;
 
-    connection.onreconnecting(() => {
+    conn.onreconnecting(() => {
       if (mountedRef.current) setStatus('reconnecting');
     });
 
-    connection.onreconnected(() => {
+    conn.onreconnected(() => {
       if (mountedRef.current) setStatus('connected');
     });
 
-    connection.onclose(() => {
+    conn.onclose(() => {
       if (mountedRef.current) setStatus('disconnected');
     });
 
-    setStatus('connecting');
-    connection
-      .start()
+    conn.start()
       .then(() => {
         if (mountedRef.current) setStatus('connected');
       })
@@ -71,8 +68,8 @@ export function useSignalR(options: UseSignalROptions = {}): UseSignalRReturn {
 
     return () => {
       mountedRef.current = false;
-      if (connection.state !== HubConnectionState.Disconnected) {
-        connection.stop();
+      if (conn.state !== HubConnectionState.Disconnected) {
+        conn.stop();
       }
       connectionRef.current = null;
     };
@@ -89,7 +86,6 @@ export function useSignalR(options: UseSignalROptions = {}): UseSignalRReturn {
   );
 
   return {
-    connection: connectionRef.current,
     status,
     on,
   };

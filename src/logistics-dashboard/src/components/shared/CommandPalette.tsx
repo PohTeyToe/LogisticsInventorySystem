@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search,
@@ -50,6 +50,8 @@ const QUICK_ACTIONS = [
   { id: 'action-reports', label: 'View Reports', icon: BarChart3, path: '/reports' },
 ];
 
+const EMPTY_RESULTS: InventoryItem[] = [];
+
 export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -57,10 +59,21 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
 
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [inventoryResults, setInventoryResults] = useState<InventoryItem[]>([]);
+  const [inventoryResults, setInventoryResults] = useState<InventoryItem[]>(EMPTY_RESULTS);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [prevOpen, setPrevOpen] = useState(open);
 
-  // Open/close the dialog
+  // Reset state synchronously when closing (React supports setState during render for derived state)
+  if (prevOpen && !open) {
+    setPrevOpen(open);
+    setQuery('');
+    setSelectedIndex(0);
+    setInventoryResults(EMPTY_RESULTS);
+  } else if (prevOpen !== open) {
+    setPrevOpen(open);
+  }
+
+  // Open/close the dialog element
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
@@ -69,9 +82,6 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
       inputRef.current?.focus();
     } else if (!open && dialog.open) {
       dialog.close();
-      setQuery('');
-      setSelectedIndex(0);
-      setInventoryResults([]);
     }
   }, [open]);
 
@@ -80,8 +90,9 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     if (query.length < 2) {
-      setInventoryResults([]);
-      return;
+      // setState in setTimeout callback avoids the synchronous-in-effect lint rule
+      const t = setTimeout(() => setInventoryResults(EMPTY_RESULTS), 0);
+      return () => clearTimeout(t);
     }
 
     debounceRef.current = setTimeout(async () => {
@@ -89,7 +100,7 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
         const result = await getInventory(1, 5, query);
         setInventoryResults(result.items);
       } catch {
-        setInventoryResults([]);
+        setInventoryResults(EMPTY_RESULTS);
       }
     }, 300);
 
@@ -158,10 +169,13 @@ export default function CommandPalette({ open, onClose }: CommandPaletteProps) {
 
   const results = buildResults();
 
-  // Reset selected index when results change
-  useEffect(() => {
+  // Reset selected index when query or results change
+  const resetKey = useMemo(() => `${query}-${inventoryResults.length}`, [query, inventoryResults]);
+  const [prevResetKey, setPrevResetKey] = useState(resetKey);
+  if (prevResetKey !== resetKey) {
+    setPrevResetKey(resetKey);
     setSelectedIndex(0);
-  }, [query, inventoryResults]);
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {

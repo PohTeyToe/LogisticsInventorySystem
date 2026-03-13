@@ -72,7 +72,14 @@ export default function Settings() {
     }
   }, []);
 
-  useEffect(() => { checkApi(); }, [checkApi]);
+  useEffect(() => {
+    let cancelled = false;
+    const baseUrl = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || 'http://localhost:7001');
+    fetch(`${baseUrl}/health`, { signal: AbortSignal.timeout(5000) })
+      .then((res) => { if (!cancelled) setApiStatus(res.ok ? 'online' : 'offline'); })
+      .catch(() => { if (!cancelled) setApiStatus('offline'); });
+    return () => { cancelled = true; };
+  }, []);
 
   // Browser notifications permission
   const handleBrowserNotifs = (enabled: boolean) => {
