@@ -17,6 +17,10 @@ on:
       - '.github/workflows/azure-deploy.yml'
   workflow_dispatch:
 
+concurrency:
+  group: api-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 env:
   AZURE_WEBAPP_NAME: logistics-inventory-api-abdallah
   AZURE_WEBAPP_PACKAGE_PATH: './publish'

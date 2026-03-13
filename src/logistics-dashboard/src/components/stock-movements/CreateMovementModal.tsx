@@ -38,9 +38,12 @@ export default function CreateMovementModal({ open, onClose, onCreated }: Create
       getInventory(1, 200)
         .then((res) => {
           setItems(res.items);
-          if (res.items.length > 0 && form.inventoryItemId === 0) {
-            setForm((f) => ({ ...f, inventoryItemId: res.items[0].id }));
-          }
+          setForm((f) => {
+            if (res.items.length > 0 && f.inventoryItemId === 0) {
+              return { ...f, inventoryItemId: res.items[0].id };
+            }
+            return f;
+          });
         })
         .catch(() => setError('Failed to load inventory items'));
     }

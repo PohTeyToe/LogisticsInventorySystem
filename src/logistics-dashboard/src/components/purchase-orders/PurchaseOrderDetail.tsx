@@ -21,15 +21,17 @@ function formatDate(iso: string): string {
 }
 
 export default function PurchaseOrderDetail({ orderId }: PurchaseOrderDetailProps) {
-  const [order, setOrder] = useState<PurchaseOrder | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [result, setResult] = useState<{ id: number; order: PurchaseOrder | null } | null>(null);
+
+  const loading = !result || result.id !== orderId;
+  const order = result?.id === orderId ? result.order : null;
 
   useEffect(() => {
-    setLoading(true);
+    let cancelled = false;
     getPurchaseOrder(orderId)
-      .then(setOrder)
-      .catch(() => setOrder(null))
-      .finally(() => setLoading(false));
+      .then((data) => { if (!cancelled) setResult({ id: orderId, order: data }); })
+      .catch(() => { if (!cancelled) setResult({ id: orderId, order: null }); });
+    return () => { cancelled = true; };
   }, [orderId]);
 
   if (loading) {

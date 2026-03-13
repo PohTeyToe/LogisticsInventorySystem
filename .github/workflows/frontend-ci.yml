@@ -12,6 +12,10 @@ on:
       - "src/logistics-dashboard/**"
       - ".github/workflows/frontend-ci.yml"
 
+concurrency:
+  group: frontend-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     name: Lint

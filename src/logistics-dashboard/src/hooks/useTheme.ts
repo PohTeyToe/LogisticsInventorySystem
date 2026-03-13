@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 type Theme = 'dark' | 'light';
 type ThemePreference = 'dark' | 'light' | 'system';
@@ -6,7 +6,7 @@ type ThemePreference = 'dark' | 'light' | 'system';
 const STORAGE_KEY = 'logistics-theme';
 
 function getSystemTheme(): Theme {
-  if (typeof window === 'undefined') return 'dark';
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return 'dark';
   return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
 }
 
@@ -28,13 +28,16 @@ function applyTheme(theme: Theme) {
 
 export default function useTheme() {
   const [preference, setPreference] = useState<ThemePreference>(getStoredPreference);
-  const [theme, setThemeState] = useState<Theme>(() => resolveTheme(getStoredPreference()));
+  const [systemTheme, setSystemTheme] = useState<Theme>(getSystemTheme);
+
+  const theme = useMemo<Theme>(
+    () => (preference === 'system' ? systemTheme : preference),
+    [preference, systemTheme],
+  );
 
   // Apply theme on mount and when preference changes
   useEffect(() => {
-    const resolved = resolveTheme(preference);
-    setThemeState(resolved);
-    applyTheme(resolved);
+    applyTheme(resolveTheme(preference));
     localStorage.setItem(STORAGE_KEY, preference);
   }, [preference]);
 
@@ -44,7 +47,7 @@ export default function useTheme() {
     const mq = window.matchMedia('(prefers-color-scheme: light)');
     const handler = () => {
       const resolved = getSystemTheme();
-      setThemeState(resolved);
+      setSystemTheme(resolved);
       applyTheme(resolved);
     };
     mq.addEventListener('change', handler);

@@ -2,7 +2,7 @@ import { useCallback, useRef, useMemo, useEffect, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Package, DollarSign, AlertTriangle, CheckCircle, Eye, ShoppingCart, Lock, Unlock, RotateCcw } from 'lucide-react';
-import { useSignalRContext } from '../contexts/SignalRContext';
+import { useSignalRContext } from '../hooks/useSignalRContext';
 import { ResponsiveGridLayout, type GridLayouts, type GridLayoutItem } from '../lib/gridLayout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -94,7 +94,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { toasts, addToast, dismiss } = useToast();
   const toastRef = useRef(addToast);
-  toastRef.current = addToast;
+  useEffect(() => { toastRef.current = addToast; }, [addToast]);
 
   // Grid layout state
   const [layouts, setLayouts] = useState<GridLayouts>(loadLayouts);
@@ -127,7 +127,7 @@ export default function Dashboard() {
   const { data: inventoryData } = useDashboardInventory();
   const { data: categories = [] } = useDashboardCategories();
 
-  const inventoryItems = inventoryData?.items ?? [];
+  const inventoryItems = useMemo(() => inventoryData?.items ?? [], [inventoryData]);
   const loading = reportLoading;
 
   // SignalR: real-time updates — invalidate React Query caches on server events
@@ -151,7 +151,7 @@ export default function Dashboard() {
         queryClient.invalidateQueries({ queryKey: ['reports'] });
         queryClient.invalidateQueries({ queryKey: ['inventory'] });
       }),
-      on('LowStockAlert', (_data: unknown) => {
+      on('LowStockAlert', () => {
         queryClient.invalidateQueries({ queryKey: ['reports'] });
         toastRef.current('New low stock alert detected', 'warning');
       }),

@@ -67,7 +67,7 @@ export default function AuditLog() {
     } finally {
       setLoading(false);
     }
-  }, [entityType, dateFrom, dateTo, page, pageSize]);
+  }, [entityType, dateFrom, dateTo, page, pageSize, addToast]);
 
   useEffect(() => { load(); }, [load]);
 

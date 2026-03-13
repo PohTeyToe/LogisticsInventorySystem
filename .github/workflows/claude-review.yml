@@ -8,6 +8,10 @@ on:
   pull_request_review_comment:
     types: [created]
 
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: false
+
 jobs:
   # Automatic review on every PR open/reopen
   auto-review:
