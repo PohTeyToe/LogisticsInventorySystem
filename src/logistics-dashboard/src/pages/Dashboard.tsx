@@ -353,7 +353,7 @@ export default function Dashboard() {
           <div key="movements" className={styles.gridWidget}>
             <div className={styles.widgetDragHandle} />
             {loading ? (
-              <Card title="Recent Stock Movements" count="24h" noPadding><SkeletonTable rows={5} cols={6} /></Card>
+              <Card title="Recent Stock Movements" count="24h" noPadding><SkeletonTable rows={5} cols={6} standalone /></Card>
             ) : (
               <Card title="Recent Stock Movements" count="24h" noPadding>
                 <table className={styles.dataTable}>

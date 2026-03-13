@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
 namespace LogisticsAPI.Hubs
 {
+    [Authorize]
     public class InventoryHub : Hub
     {
         private readonly ILogger<InventoryHub> _logger;

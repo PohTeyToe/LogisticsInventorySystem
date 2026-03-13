@@ -37,7 +37,9 @@ export function useSignalR(options: UseSignalROptions = {}): UseSignalRReturn {
     if (!autoConnect) return;
 
     const connection = new HubConnectionBuilder()
-      .withUrl(HUB_URL)
+      .withUrl(HUB_URL, {
+        accessTokenFactory: () => localStorage.getItem('auth_token') || '',
+      })
       .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
       .configureLogging(LogLevel.Warning)
       .build();

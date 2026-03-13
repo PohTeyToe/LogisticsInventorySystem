@@ -13,7 +13,7 @@ export default function TopMovers({ data, loading }: TopMoversProps) {
   if (loading) {
     return (
       <Card title="Top Movers by Volume" count="Top 10" noPadding>
-        <SkeletonTable rows={10} cols={6} />
+        <SkeletonTable rows={10} cols={6} standalone />
       </Card>
     );
   }

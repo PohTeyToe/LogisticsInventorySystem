@@ -18,6 +18,12 @@ const client = axios.create({
 client.interceptors.request.use((config) => {
   const tenantId = localStorage.getItem('tenantId') || DEFAULT_TENANT;
   config.headers['X-Tenant-Id'] = tenantId;
+
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+
   return config;
 });
 
@@ -29,6 +35,11 @@ client.interceptors.response.use(
     return response;
   },
   (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('auth_token');
+      window.location.href = '/login';
+      return Promise.reject(error);
+    }
     if (error.response?.status === 429) {
       console.warn('Rate limited — retrying in 2s');
       return new Promise((resolve) => {
