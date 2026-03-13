@@ -1,0 +1,16 @@
+# Default owner for everything
+* @PohTeyToe
+
+# API
+/src/LogisticsAPI/ @PohTeyToe
+/tests/ @PohTeyToe
+
+# Frontend
+/src/logistics-dashboard/ @PohTeyToe
+
+# CI/CD
+/.github/ @PohTeyToe
+
+# Infrastructure
+/docker-compose.yml @PohTeyToe
+/Makefile @PohTeyToe

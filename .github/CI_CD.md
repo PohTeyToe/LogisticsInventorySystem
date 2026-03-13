@@ -9,7 +9,11 @@ Complete reference for all GitHub Actions workflows, secrets, and troubleshootin
 | Azure Deploy | `azure-deploy.yml` | Push/PR to main (API paths) | Build, test, deploy .NET API |
 | Frontend CI | `frontend-ci.yml` | Push/PR to main (frontend paths) | Lint, typecheck, test, build React |
 | Claude Review | `claude-review.yml` | PR open/reopen + `@claude` | AI code review |
+| CodeQL | `codeql.yml` | PR + weekly (Monday 6am UTC) | Security scanning (C# + JS/TS) |
+| Commit Lint | `commit-lint.yml` | PR title | Conventional commit enforcement |
 | Dependabot | `dependabot.yml` | Weekly/monthly schedule | Dependency updates |
+
+All workflows use **concurrency groups** — pushing new commits to a PR branch cancels in-progress runs (except Claude review, which completes).
 
 ---
 
@@ -144,3 +148,60 @@ Automated dependency update PRs:
 - **Docker** (base images): monthly
 
 PRs are auto-labeled (`dependencies` + ecosystem label) for easy filtering.
+
+---
+
+## codeql.yml — Security Scanning
+
+### Triggers
+- Push to `main`
+- PRs targeting `main`
+- Weekly schedule: Monday 6am UTC
+
+### Jobs
+
+#### 1. analyze-csharp
+- Builds the .NET solution and runs CodeQL analysis
+- Catches SQL injection, path traversal, insecure deserialization, etc.
+
+#### 2. analyze-javascript
+- Scans TypeScript/JavaScript without build step
+- Catches XSS, prototype pollution, regex DoS, etc.
+
+Results appear in the **Security** tab of the repository.
+
+### Troubleshooting
+
+| Problem | Fix |
+|-|-|
+| C# analysis fails | Usually a build error. Check if `dotnet build` works locally |
+| JS analysis slow | Normal — first run indexes the codebase. Subsequent runs are faster |
+| False positives | Dismiss via Security tab with a reason. CodeQL learns from dismissals |
+
+---
+
+## commit-lint.yml — Conventional Commits
+
+Validates PR titles match conventional commit format. Enforced types:
+`feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `ci`, `style`
+
+PR title must be 72 characters or fewer.
+
+### Examples
+- `feat: add warehouse capacity chart` — new feature
+- `fix: resolve tenant isolation in stock movements` — bug fix
+- `chore: update dependencies` — maintenance
+- `docs: update API endpoint table` — documentation only
+
+### Troubleshooting
+
+| Problem | Fix |
+|-|-|
+| PR title rejected | Edit the PR title to match `type: description` format |
+| Type not recognized | Use one of: feat, fix, chore, docs, refactor, test, perf, ci, style |
+
+---
+
+## CODEOWNERS
+
+`@PohTeyToe` owns all paths. GitHub shows ownership in PR file review and automatically requests review from owners.

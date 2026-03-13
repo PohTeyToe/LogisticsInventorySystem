@@ -70,7 +70,10 @@ Logistics inventory management platform with .NET Core API and React frontend.
 - `.github/workflows/azure-deploy.yml` — builds, tests, and deploys API to Azure on push to main (path-filtered to API changes)
 - `.github/workflows/frontend-ci.yml` — lint (parallel), typecheck, test, build for React on push/PR touching `src/logistics-dashboard/`
 - `.github/workflows/claude-review.yml` — AI code review on PR open + `@claude` mentions in PR comments
+- `.github/workflows/codeql.yml` — security scanning for C# and JS/TS (PRs + weekly)
+- `.github/workflows/commit-lint.yml` — validates PR titles follow conventional commits
 - `.github/dependabot.yml` — automated dependency updates (NuGet weekly, npm weekly, Actions weekly, Docker monthly)
+- All workflows use concurrency groups to cancel stale runs
 - Full pipeline docs: `.github/CI_CD.md`
 
 ### Secrets required for CI
@@ -96,7 +99,9 @@ Logistics inventory management platform with .NET Core API and React frontend.
 6. **Read Claude's review** with `gh pr view <pr-number> --comments` — address feedback if needed
 7. **Merge** when CI is green: `gh pr merge <pr-number> --squash --delete-branch`
 
-Never push directly to main. Always use a PR so CI and the review bot can run.
+Never push directly to main — except for **docs-only changes** (`.md` files, comments, no code). Those can go straight to main.
+
+PR titles must follow conventional commits: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`, `perf:`, `ci:`
 
 ## Agent tips
 - The frontend Axios interceptor auto-adds `X-Tenant-Id: 1` and the JWT auth token — don't add these manually in frontend code
