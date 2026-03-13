@@ -1,5 +1,6 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import { useSignalR, type ConnectionStatus, type UseSignalRReturn } from '../hooks/useSignalR';
+import { useAuth } from './AuthContext';
 
 interface SignalRContextValue {
   status: ConnectionStatus;
@@ -13,7 +14,8 @@ const SignalRContext = createContext<SignalRContextValue>({
 });
 
 export function SignalRProvider({ children }: { children: ReactNode }) {
-  const { status, on } = useSignalR({ autoConnect: true });
+  const { isAuthenticated } = useAuth();
+  const { status, on } = useSignalR({ autoConnect: isAuthenticated });
 
   return (
     <SignalRContext.Provider value={{ status, on }}>

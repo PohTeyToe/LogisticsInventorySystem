@@ -15,7 +15,8 @@ namespace LogisticsAPI.Middleware
         {
             // Skip tenant resolution for Swagger and auth endpoints
             if (context.Request.Path.StartsWithSegments("/swagger") ||
-                context.Request.Path.StartsWithSegments("/api/auth"))
+                context.Request.Path.StartsWithSegments("/api/auth") ||
+                context.Request.Path.StartsWithSegments("/hubs"))
             {
                 await _next(context);
                 return;
