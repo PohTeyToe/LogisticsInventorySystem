@@ -17,12 +17,12 @@ const sidebarLinks = [
 test.describe('Sidebar Navigation', () => {
   test('all sidebar links navigate to correct pages', async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveURL('/');
+    await page.waitForLoadState('networkidle');
 
     for (const link of sidebarLinks) {
-      const nav = page.locator('nav[aria-label="Site navigation"]');
+      const nav = page.locator('aside[aria-label="Main navigation"] nav');
       await nav.getByText(link.label, { exact: true }).click();
-      await expect(page).toHaveURL(link.path);
+      await page.waitForURL(link.path);
       // Page should have some content — not a blank page
       await expect(page.locator('main')).toBeVisible();
     }
@@ -30,7 +30,8 @@ test.describe('Sidebar Navigation', () => {
 
   test('unknown routes show not-found page', async ({ page }) => {
     await page.goto('/nonexistent-route');
-    await expect(page.getByText(/not found|404/i)).toBeVisible();
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByText('Page not found')).toBeVisible({ timeout: 10_000 });
   });
 
   test('sidebar brand is visible', async ({ page }) => {

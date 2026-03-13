@@ -1,0 +1,22 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost:5173",
+      "localStorage": [
+        {
+          "name": "auth_token",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjhiMGE4NTAwLTA0YTEtNDkzNy1hY2E5LTNjOTdkZGVlODcyYyIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImUyZUB0ZXN0LmNvbSIsImp0aSI6IjFhODNkZWM2LWRkZDYtNGU1Ni1hNmVkLTBjODM5ZTc4ZTZlOCIsInRlbmFudF9pZCI6IjEiLCJleHAiOjE3NzM0MTI0NzUsImlzcyI6IkxvZ2lzdGljc0FQSSIsImF1ZCI6IkxvZ2lzdGljc0Rhc2hib2FyZCJ9.CAZEWvmd6BJU478S0aG35z3W-errLylU29diZOSZyqA"
+        },
+        {
+          "name": "auth_refresh_token",
+          "value": "WYM6OFEKqjO2zHG/kEPgGjHCwC/12l96IEFVCxt5x7uHnFDmRfae/8693KbSWm1pXfm/ZAuMte67D/UzjZhH+Q=="
+        },
+        {
+          "name": "auth_user",
+          "value": "{\"email\":\"e2e@test.com\",\"fullName\":null,\"tenantId\":1}"
+        }
+      ]
+    }
+  ]
+}
