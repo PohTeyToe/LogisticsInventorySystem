@@ -6,6 +6,6 @@
     { "source": "/(.*)", "destination": "/" }
   ],
   "env": {
-    "VITE_API_URL": "@logistics-api-url"
+    "VITE_API_URL": "https://logistics-inventory-api-abdallah.azurewebsites.net"
   }
 }
