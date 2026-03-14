@@ -119,10 +119,7 @@ jobs:
             - Provide minimal working code snippets for fixes
             - Prefer small, incremental changes; avoid large rewrites unless critical
 
-            **Posting Instructions:**
-            - Use `gh pr comment` for the top-level summary report
-            - Use `gh pr review` with inline comments for specific code issues
-            - Rate the PR: APPROVE, REQUEST_CHANGES, or COMMENT
+            Rate the PR: APPROVE, REQUEST_CHANGES, or COMMENT.
 
           claude_args: |
             --model claude-opus-4-6 --max-turns 100 --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent,WebFetch"
