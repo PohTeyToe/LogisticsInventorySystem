@@ -108,16 +108,19 @@ export default function PurchaseOrders() {
     <>
       <Header title="Purchase Orders" />
       <main className={styles.content}>
-        {filter === 'All' && (
-          <div className={dashStyles.pipeline} style={{ marginBottom: 16 }}>
-            {(['Pending', 'Approved', 'Shipped', 'Received'] as PurchaseOrderStatus[]).map((status) => (
-              <div key={status} className={`${dashStyles.pipelineStage} ${dashStyles[`stage${status}`]}`} onClick={() => setFilter(status)} style={{ cursor: 'pointer' }}>
-                <div className={dashStyles.pipelineCount}>{pipelineCounts[status] || 0}</div>
-                <div className={dashStyles.pipelineLabel}>{status}</div>
-              </div>
-            ))}
-          </div>
-        )}
+        <div className={dashStyles.pipeline} style={{ marginBottom: 16 }}>
+          {(['Pending', 'Approved', 'Shipped', 'Received'] as PurchaseOrderStatus[]).map((status) => (
+            <div
+              key={status}
+              className={`${dashStyles.pipelineStage} ${dashStyles[`stage${status}`]} ${filter === status ? dashStyles.pipelineStageActive : ''}`}
+              onClick={() => setFilter(filter === status ? 'All' : status)}
+              style={{ cursor: 'pointer' }}
+            >
+              <div className={dashStyles.pipelineCount}>{pipelineCounts[status] || 0}</div>
+              <div className={dashStyles.pipelineLabel}>{status}</div>
+            </div>
+          ))}
+        </div>
 
         <div className={styles.toolbar}>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', flex: 1 }}>

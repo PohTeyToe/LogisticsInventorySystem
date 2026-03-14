@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Plus, Trash2, Edit3, Download, Search } from 'lucide-react';
+import { Plus, Trash2, Edit3, Search } from 'lucide-react';
 import Header from '../components/layout/Header';
 import Card from '../components/shared/Card';
 import Button from '../components/shared/Button';
@@ -13,6 +13,8 @@ import BulkActionBar from '../components/shared/BulkActionBar';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
 import { useWarehousesList, useCreateWarehouse, useUpdateWarehouse, useDeleteWarehouse } from '../hooks/queries/useWarehouseQueries';
 import { exportToCsv } from '../utils/exportCsv';
+import { exportTableToPdf } from '../utils/exportPdf';
+import ExportDropdown from '../components/shared/ExportDropdown';
 import { useToast } from '../hooks/useToastSimple';
 import { useBulkSelect } from '../hooks/useBulkSelect';
 import { useTableSort } from '../hooks/useTableSort';
@@ -105,13 +107,22 @@ export default function Warehouses() {
     }
   };
 
-  const handleExport = () => {
+  const handleExportCsv = () => {
     const headers = ['Name', 'Address', 'Capacity', 'Item Count', 'Utilization %', 'Active'];
     const rows = items.map((item) => [
       item.name, item.address || '', item.capacity, item.itemCount,
       item.utilizationPercentage, item.isActive ? 'Yes' : 'No',
     ]);
     exportToCsv('warehouses.csv', headers, rows);
+  };
+
+  const handleExportPdf = () => {
+    const headers = ['Name', 'Address', 'Capacity', 'Item Count', 'Utilization %', 'Active'];
+    const rows = items.map((item) => [
+      item.name, item.address || '', String(item.capacity), String(item.itemCount),
+      String(item.utilizationPercentage), item.isActive ? 'Yes' : 'No',
+    ]);
+    exportTableToPdf('Warehouses', headers, rows, 'warehouses');
   };
 
   return (
@@ -129,9 +140,7 @@ export default function Warehouses() {
             />
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <Button variant="ghost" size="sm" onClick={handleExport}>
-              <Download size={14} /> Export
-            </Button>
+            <ExportDropdown onExportCsv={handleExportCsv} onExportPdf={handleExportPdf} />
             <Button variant="primary" size="md" onClick={openCreate}><Plus size={14} /> Add Warehouse</Button>
           </div>
         </div>

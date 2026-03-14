@@ -97,7 +97,7 @@ export default function StockMovements() {
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <Button variant="primary" size="sm" onClick={() => setModalOpen(true)}>
+            <Button variant="primary" size="md" onClick={() => setModalOpen(true)}>
               <Plus size={14} /> Record Movement
             </Button>
             <ExportDropdown onExportCsv={handleExportCsv} onExportPdf={handleExportPdf} />

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Plus, Trash2, Edit3, Download, Search } from 'lucide-react';
+import { Plus, Trash2, Edit3, Search } from 'lucide-react';
 import Header from '../components/layout/Header';
 import Card from '../components/shared/Card';
 import Button from '../components/shared/Button';
@@ -12,6 +12,8 @@ import BulkActionBar from '../components/shared/BulkActionBar';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
 import { useCategoriesList, useCreateCategory, useUpdateCategory, useDeleteCategory } from '../hooks/queries/useCategoryQueries';
 import { exportToCsv } from '../utils/exportCsv';
+import { exportTableToPdf } from '../utils/exportPdf';
+import ExportDropdown from '../components/shared/ExportDropdown';
 import { useToast } from '../hooks/useToastSimple';
 import { useBulkSelect } from '../hooks/useBulkSelect';
 import { useTableSort } from '../hooks/useTableSort';
@@ -103,10 +105,16 @@ export default function Categories() {
     }
   };
 
-  const handleExport = () => {
+  const handleExportCsv = () => {
     const headers = ['Name', 'Description', 'Item Count'];
     const rows = items.map((item) => [item.name, item.description || '', item.itemCount ?? 0]);
     exportToCsv('categories.csv', headers, rows);
+  };
+
+  const handleExportPdf = () => {
+    const headers = ['Name', 'Description', 'Item Count'];
+    const rows = items.map((item) => [item.name, item.description || '', String(item.itemCount ?? 0)]);
+    exportTableToPdf('Categories', headers, rows, 'categories');
   };
 
   return (
@@ -124,9 +132,7 @@ export default function Categories() {
             />
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <Button variant="ghost" size="sm" onClick={handleExport}>
-              <Download size={14} /> Export
-            </Button>
+            <ExportDropdown onExportCsv={handleExportCsv} onExportPdf={handleExportPdf} />
             <Button variant="primary" size="md" onClick={openCreate}><Plus size={14} /> Add Category</Button>
           </div>
         </div>

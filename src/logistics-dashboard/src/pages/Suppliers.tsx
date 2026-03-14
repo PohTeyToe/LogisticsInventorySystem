@@ -19,6 +19,7 @@ import { useTableSort } from '../hooks/useTableSort';
 import { usePagination } from '../hooks/usePagination';
 import type { Supplier, SupplierPerformance } from '../types';
 import styles from './CrudPage.module.css';
+import perfStyles from './Suppliers.module.css';
 
 type SortKey = 'name' | 'contactEmail' | 'phone';
 
@@ -252,32 +253,32 @@ export default function Suppliers() {
           onClose={() => setPerfSupplier(null)}
         >
           {perfLoading ? (
-            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-muted)', fontSize: 13 }}>Loading metrics...</div>
+            <div className={perfStyles.perfLoading}>Loading metrics...</div>
           ) : perfData ? (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div style={{ background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', padding: 16, textAlign: 'center' }}>
-                <div style={{ fontFamily: 'var(--font-data)', fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>{perfData.totalOrders}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Total Orders</div>
+            <div className={perfStyles.perfGrid}>
+              <div className={perfStyles.perfCard}>
+                <div className={perfStyles.perfValue}>{perfData.totalOrders}</div>
+                <div className={perfStyles.perfLabel}>Total Orders</div>
               </div>
-              <div style={{ background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', padding: 16, textAlign: 'center' }}>
-                <div style={{ fontFamily: 'var(--font-data)', fontSize: 24, fontWeight: 700, color: 'var(--status-success)' }}>{perfData.completedOrders}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Completed</div>
+              <div className={perfStyles.perfCard}>
+                <div className={`${perfStyles.perfValue} ${perfStyles.perfValueSuccess}`}>{perfData.completedOrders}</div>
+                <div className={perfStyles.perfLabel}>Completed</div>
               </div>
-              <div style={{ background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', padding: 16, textAlign: 'center' }}>
-                <div style={{ fontFamily: 'var(--font-data)', fontSize: 24, fontWeight: 700, color: perfData.onTimeDeliveryRate >= 80 ? 'var(--status-success)' : perfData.onTimeDeliveryRate >= 50 ? 'var(--amber)' : 'var(--status-danger)' }}>
+              <div className={perfStyles.perfCard}>
+                <div className={`${perfStyles.perfValue} ${perfData.onTimeDeliveryRate >= 80 ? perfStyles.perfValueSuccess : perfData.onTimeDeliveryRate >= 50 ? perfStyles.perfValueAmber : perfStyles.perfValueDanger}`}>
                   {perfData.onTimeDeliveryRate}%
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>On-Time Rate</div>
+                <div className={perfStyles.perfLabel}>On-Time Rate</div>
               </div>
-              <div style={{ background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', padding: 16, textAlign: 'center' }}>
-                <div style={{ fontFamily: 'var(--font-data)', fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>{perfData.averageLeadTimeDays}d</div>
-                <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Avg Lead Time</div>
+              <div className={perfStyles.perfCard}>
+                <div className={perfStyles.perfValue}>{perfData.averageLeadTimeDays}d</div>
+                <div className={perfStyles.perfLabel}>Avg Lead Time</div>
               </div>
-              <div style={{ gridColumn: '1 / -1', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', padding: 16, textAlign: 'center' }}>
-                <div style={{ fontFamily: 'var(--font-data)', fontSize: 24, fontWeight: 700, color: 'var(--accent-teal)' }}>
+              <div className={perfStyles.perfCardFull}>
+                <div className={`${perfStyles.perfValue} ${perfStyles.perfValueTeal}`}>
                   ${perfData.totalSpend.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Total Spend</div>
+                <div className={perfStyles.perfLabel}>Total Spend</div>
               </div>
             </div>
           ) : null}
