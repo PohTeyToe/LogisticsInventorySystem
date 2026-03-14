@@ -25,6 +25,7 @@ Logistics inventory management platform with .NET Core API and React frontend.
 | `src/logistics-dashboard/src/contexts/AuthContext.tsx` | JWT auth context + login/logout |
 | `docker-compose.yml` | Local dev stack: SQL Server 2022 + API + React/nginx |
 | `Makefile` | Dev commands (see below) |
+| `src/logistics-dashboard/public/staticwebapp.config.json` | Azure SWA routing config (SPA fallback) |
 
 ## Makefile commands (use these)
 - `make dev` — run API + React frontend concurrently
@@ -74,6 +75,8 @@ Logistics inventory management platform with .NET Core API and React frontend.
 - `.github/workflows/commit-lint.yml` — validates PR titles follow conventional commits
 - `.github/dependabot.yml` — automated dependency updates (NuGet weekly, npm weekly, Actions weekly, Docker monthly)
 - `.github/workflows/vercel-preview.yml` — deploys frontend preview URLs on PRs (Vercel CLI)
+- `.github/workflows/vercel-staging.yml` — deploys frontend to Vercel production on push to main
+- `.github/workflows/azure-frontend.yml` — deploys frontend to Azure SWA mirror on push to main
 - All workflows use concurrency groups to cancel stale runs
 - Full pipeline docs: `.github/CI_CD.md`
 
@@ -83,6 +86,9 @@ Logistics inventory management platform with .NET Core API and React frontend.
 | `AZURE_WEBAPP_PUBLISH_PROFILE` | Azure App Service deployment |
 | `CLAUDE_CODE_OAUTH_TOKEN` | Claude Code OAuth for PR review bot |
 | `VERCEL_TOKEN` | Vercel CLI preview deploys |
+| `AZURE_STATIC_WEB_APPS_API_TOKEN` | Azure SWA deployment |
+| `VERCEL_ORG_ID` | Vercel staging deploys |
+| `VERCEL_PROJECT_ID` | Vercel staging deploys |
 
 ## Database
 - Dev: SQLite at `data/logistics.db`

@@ -141,7 +141,9 @@ builder.Services.AddCors(options =>
                   "https://logistics-inventory-api.azurewebsites.net",
                   "https://logistics-inventory-ui.azurewebsites.net",
                   "https://logistics-inventory-api-abdallah.azurewebsites.net",
-                  "https://logistics-inventory-ui-abdallah.azurewebsites.net")
+                  "https://logistics-inventory-ui-abdallah.azurewebsites.net",
+                  "https://logistics-dashboard.vercel.app",
+                  "https://lemon-island-044a86a0f.1.azurestaticapps.net")
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
