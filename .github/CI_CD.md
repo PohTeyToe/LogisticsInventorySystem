@@ -11,6 +11,7 @@ Complete reference for all GitHub Actions workflows, secrets, and troubleshootin
 | Claude Review | `claude-review.yml` | PR open/reopen + `@claude` | AI code review |
 | CodeQL | `codeql.yml` | PR + weekly (Monday 6am UTC) | Security scanning (C# + JS/TS) |
 | Commit Lint | `commit-lint.yml` | PR title | Conventional commit enforcement |
+| Vercel Preview | `vercel-preview.yml` | PR (frontend paths) | Preview deploy URLs on PRs |
 | Dependabot | `dependabot.yml` | Weekly/monthly schedule | Dependency updates |
 
 All workflows use **concurrency groups** — pushing new commits to a PR branch cancels in-progress runs (except Claude review, which completes).
@@ -127,14 +128,14 @@ Only runs when these paths change:
 | Secret | Purpose | How to get |
 |-|-|-|
 | `AZURE_WEBAPP_PUBLISH_PROFILE` | Azure App Service deployment | Azure Portal > App Service > Get Publish Profile |
-| `ANTHROPIC_API_KEY` | Claude API for PR review bot | Available as shell env var `$ANTHROPIC_API_KEY` |
 | `CLAUDE_CODE_OAUTH_TOKEN` | Claude Code OAuth for PR review bot | Available as shell env var `$CLAUDE_CODE_OAUTH_TOKEN` |
+| `VERCEL_TOKEN` | Vercel CLI preview deploys | Available as shell env var `$VERCEL_TOKEN` |
 
-### Setup for Claude Review on new repos
-Both tokens are available as shell environment variables. Set them on a new repo with:
+### Setup for new repos
+Tokens are available as shell environment variables. Set them on a new repo with:
 ```
-gh secret set ANTHROPIC_API_KEY --body "$ANTHROPIC_API_KEY"
 gh secret set CLAUDE_CODE_OAUTH_TOKEN --body "$CLAUDE_CODE_OAUTH_TOKEN"
+gh secret set VERCEL_TOKEN --body "$VERCEL_TOKEN"
 ```
 
 ---
@@ -145,9 +146,33 @@ Automated dependency update PRs:
 - **NuGet** (.NET packages): weekly on Monday, max 5 open PRs
 - **npm** (React frontend): weekly on Monday, max 5 open PRs
 - **GitHub Actions**: weekly on Monday, max 3 open PRs
-- **Docker** (base images): monthly
+- **Docker** (API + frontend base images): monthly
 
 PRs are auto-labeled (`dependencies` + ecosystem label) for easy filtering.
+
+---
+
+## vercel-preview.yml — Frontend Preview Deploys
+
+### Triggers
+- PRs targeting `main`
+- **Path filter:** `src/logistics-dashboard/**` or `.github/workflows/vercel-preview.yml`
+
+### How it works
+1. Resets git author to repo owner (Vercel Hobby plan requirement)
+2. Builds with `vercel build` via CLI
+3. Deploys with `vercel deploy --prebuilt`
+4. Posts/updates a "Preview Deploy" PR comment with preview URL, deployment history, and build logs
+
+Production stays on Azure — Vercel is preview/experimental only.
+
+### Troubleshooting
+
+| Problem | Fix |
+|-|-|
+| Build fails | Check build logs in the PR comment `<details>` section |
+| No preview URL | Check if `VERCEL_TOKEN` secret is valid. Regenerate at vercel.com/account/tokens |
+| "Commit author not a member" | The reset-author step didn't run. Check Actions log |
 
 ---
 
