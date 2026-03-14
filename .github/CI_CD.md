@@ -98,19 +98,23 @@ Only runs when these paths change:
 - Full staff-level review covering architecture, security, performance, testing
 - Posts summary via `gh pr comment`, inline issues via `gh pr review`
 - Does NOT trigger on `synchronize` (saves API costs per push)
+- Review prompt is defined once in the workflow-level `env.REVIEW_PROMPT` block
 
 #### 2. claude-assist (on `@claude` in PR comments)
-- Responds to ad-hoc questions from contributors
+- **Smart routing:** automatically detects whether the comment is a re-review request or a general question
+- Re-review requests (e.g. "re-review", "review again", "check the changes") produce the same structured staff-level review as auto-review
+- General questions get concise, targeted answers with file paths and line numbers
 - Has full project context via system prompt
 
 #### 3. claude-review-assist (on `@claude` in review comments)
-- Same as claude-assist but for inline review comment threads
+- Same smart routing as claude-assist but for inline review comment threads
 
 ### Usage
 - **Auto review:** Opens automatically on new PRs
 - **Ask a question:** Comment `@claude <your question>` on a PR
-- **Re-review:** Comment `@claude please re-review this PR`
-- **Targeted:** `@claude is the tenant isolation fixed in this controller?`
+- **Re-review after changes:** Comment `@claude please re-review this PR` — produces full structured review
+- **Targeted:** `@claude is the tenant isolation fixed in this controller?` — gets a concise answer
+- Smart routing means you don't need separate commands — Claude detects intent automatically
 
 ### Troubleshooting
 
