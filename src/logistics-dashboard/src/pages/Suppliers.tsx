@@ -10,6 +10,7 @@ import ToastContainer from '../components/shared/ToastContainer';
 import Pagination from '../components/shared/Pagination';
 import BulkActionBar from '../components/shared/BulkActionBar';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
+import ErrorState from '../components/shared/ErrorState';
 import { useSuppliersList, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from '../hooks/queries/useSupplierQueries';
 import { getSupplierPerformance } from '../api/suppliers';
 import { exportToCsv } from '../utils/exportCsv';
@@ -19,6 +20,7 @@ import { useTableSort } from '../hooks/useTableSort';
 import { usePagination } from '../hooks/usePagination';
 import type { Supplier, SupplierPerformance } from '../types';
 import styles from './CrudPage.module.css';
+import perfStyles from './Suppliers.module.css';
 
 type SortKey = 'name' | 'contactEmail' | 'phone';
 
@@ -46,7 +48,7 @@ export default function Suppliers() {
   const [perfData, setPerfData] = useState<SupplierPerformance | null>(null);
   const [perfLoading, setPerfLoading] = useState(false);
 
-  const { data: items = [], isLoading: loading } = useSuppliersList();
+  const { data: items = [], isLoading: loading, isError, refetch } = useSuppliersList();
   const createMutation = useCreateSupplier();
   const updateMutation = useUpdateSupplier();
   const deleteMutation = useDeleteSupplier();
@@ -160,6 +162,8 @@ export default function Suppliers() {
 
         <BulkActionBar count={bulk.count} onDelete={() => setBulkConfirmOpen(true)} onClear={bulk.clearSelection} />
 
+        {isError && !loading && <ErrorState message="Failed to load suppliers" onRetry={() => refetch()} />}
+
         <Card title="All Suppliers" count={totalItems} noPadding>
           <div className={styles.tableWrap}>
           <table className={styles.table}>
@@ -169,6 +173,7 @@ export default function Suppliers() {
                   <input
                     type="checkbox"
                     className={styles.checkbox}
+                    aria-label="Select all"
                     checked={bulk.isAllSelected(paginatedItems.map((i) => i.id))}
                     onChange={() => bulk.toggleSelectAll(paginatedItems.map((i) => i.id))}
                   />
@@ -193,6 +198,7 @@ export default function Suppliers() {
                     <input
                       type="checkbox"
                       className={styles.checkbox}
+                      aria-label={`Select ${item.name}`}
                       checked={bulk.isSelected(item.id)}
                       onChange={() => bulk.toggleSelect(item.id)}
                     />
@@ -203,9 +209,9 @@ export default function Suppliers() {
                   <td className={styles.hideMobile}>{item.address || '-'}</td>
                   <td>
                     <div className={styles.actions}>
-                      <button className={styles.actionBtn} title="Performance" onClick={() => openPerformance(item)}><BarChart3 size={14} /></button>
-                      <button className={styles.actionBtn} onClick={() => openEdit(item)}><Edit3 size={14} /></button>
-                      <button className={styles.actionBtn} onClick={() => setConfirmDelete({ id: item.id, name: item.name })}><Trash2 size={14} /></button>
+                      <button className={styles.actionBtn} title="Performance" aria-label="View performance" onClick={() => openPerformance(item)}><BarChart3 size={14} /></button>
+                      <button className={styles.actionBtn} aria-label={`Edit ${item.name}`} onClick={() => openEdit(item)}><Edit3 size={14} /></button>
+                      <button className={styles.actionBtn} aria-label={`Delete ${item.name}`} onClick={() => setConfirmDelete({ id: item.id, name: item.name })}><Trash2 size={14} /></button>
                     </div>
                   </td>
                 </tr>
@@ -222,7 +228,7 @@ export default function Suppliers() {
         </Card>
 
         <Modal title={editing ? 'Edit Supplier' : 'Add Supplier'} open={modalOpen} onClose={() => setModalOpen(false)}
-          footer={<><Button onClick={() => setModalOpen(false)}>Cancel</Button><Button variant="primary" size="md" onClick={handleSave}>{editing ? 'Update' : 'Create'}</Button></>}>
+          footer={<><Button onClick={() => setModalOpen(false)}>Cancel</Button><Button variant="primary" size="md" onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>{createMutation.isPending || updateMutation.isPending ? 'Saving...' : editing ? 'Update' : 'Create'}</Button></>}>
           <FormField label="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Supplier name" />
           <FormField label="Email" type="email" value={form.contactEmail} onChange={(e) => setForm({ ...form, contactEmail: e.target.value })} placeholder="contact@example.com" />
           <FormField label="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(555) 123-4567" />
@@ -252,32 +258,32 @@ export default function Suppliers() {
           onClose={() => setPerfSupplier(null)}
         >
           {perfLoading ? (
-            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-muted)', fontSize: 13 }}>Loading metrics...</div>
+            <div className={perfStyles.perfLoading}>Loading metrics...</div>
           ) : perfData ? (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div style={{ background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', padding: 16, textAlign: 'center' }}>
-                <div style={{ fontFamily: 'var(--font-data)', fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>{perfData.totalOrders}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Total Orders</div>
+            <div className={perfStyles.perfGrid}>
+              <div className={perfStyles.perfCard}>
+                <div className={perfStyles.perfValue}>{perfData.totalOrders}</div>
+                <div className={perfStyles.perfLabel}>Total Orders</div>
               </div>
-              <div style={{ background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', padding: 16, textAlign: 'center' }}>
-                <div style={{ fontFamily: 'var(--font-data)', fontSize: 24, fontWeight: 700, color: 'var(--status-success)' }}>{perfData.completedOrders}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Completed</div>
+              <div className={perfStyles.perfCard}>
+                <div className={`${perfStyles.perfValue} ${perfStyles.perfValueSuccess}`}>{perfData.completedOrders}</div>
+                <div className={perfStyles.perfLabel}>Completed</div>
               </div>
-              <div style={{ background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', padding: 16, textAlign: 'center' }}>
-                <div style={{ fontFamily: 'var(--font-data)', fontSize: 24, fontWeight: 700, color: perfData.onTimeDeliveryRate >= 80 ? 'var(--status-success)' : perfData.onTimeDeliveryRate >= 50 ? 'var(--amber)' : 'var(--status-danger)' }}>
+              <div className={perfStyles.perfCard}>
+                <div className={`${perfStyles.perfValue} ${perfData.onTimeDeliveryRate >= 80 ? perfStyles.perfValueSuccess : perfData.onTimeDeliveryRate >= 50 ? perfStyles.perfValueAmber : perfStyles.perfValueDanger}`}>
                   {perfData.onTimeDeliveryRate}%
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>On-Time Rate</div>
+                <div className={perfStyles.perfLabel}>On-Time Rate</div>
               </div>
-              <div style={{ background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', padding: 16, textAlign: 'center' }}>
-                <div style={{ fontFamily: 'var(--font-data)', fontSize: 24, fontWeight: 700, color: 'var(--text-primary)' }}>{perfData.averageLeadTimeDays}d</div>
-                <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Avg Lead Time</div>
+              <div className={perfStyles.perfCard}>
+                <div className={perfStyles.perfValue}>{perfData.averageLeadTimeDays}d</div>
+                <div className={perfStyles.perfLabel}>Avg Lead Time</div>
               </div>
-              <div style={{ gridColumn: '1 / -1', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', padding: 16, textAlign: 'center' }}>
-                <div style={{ fontFamily: 'var(--font-data)', fontSize: 24, fontWeight: 700, color: 'var(--accent-teal)' }}>
+              <div className={perfStyles.perfCardFull}>
+                <div className={`${perfStyles.perfValue} ${perfStyles.perfValueTeal}`}>
                   ${perfData.totalSpend.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Total Spend</div>
+                <div className={perfStyles.perfLabel}>Total Spend</div>
               </div>
             </div>
           ) : null}

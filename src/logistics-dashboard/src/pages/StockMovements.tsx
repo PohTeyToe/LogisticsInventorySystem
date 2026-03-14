@@ -9,6 +9,7 @@ import SkeletonTable from '../components/shared/SkeletonTable';
 import ToastContainer from '../components/shared/ToastContainer';
 import Pagination from '../components/shared/Pagination';
 import ExportDropdown from '../components/shared/ExportDropdown';
+import ErrorState from '../components/shared/ErrorState';
 import CreateMovementModal from '../components/stock-movements/CreateMovementModal';
 import { useStockMovementsList, stockMovementKeys } from '../hooks/queries/useStockMovementQueries';
 import { exportToCsv } from '../utils/exportCsv';
@@ -39,7 +40,7 @@ export default function StockMovements() {
   const queryClient = useQueryClient();
 
   const queryParams = filter === 'All' ? undefined : { type: filter };
-  const { data: movements = [], isLoading: loading } = useStockMovementsList(queryParams);
+  const { data: movements = [], isLoading: loading, isError, refetch } = useStockMovementsList(queryParams);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return movements;
@@ -97,12 +98,14 @@ export default function StockMovements() {
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <Button variant="primary" size="sm" onClick={() => setModalOpen(true)}>
+            <Button variant="primary" size="md" onClick={() => setModalOpen(true)}>
               <Plus size={14} /> Record Movement
             </Button>
             <ExportDropdown onExportCsv={handleExportCsv} onExportPdf={handleExportPdf} />
           </div>
         </div>
+
+        {isError && !loading && <ErrorState message="Failed to load stock movements" onRetry={() => refetch()} />}
 
         <Card title="Movement History" count={totalItems} noPadding>
           <div className={styles.tableWrap}>

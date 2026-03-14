@@ -12,16 +12,20 @@ import { exportTableToPdf } from '../utils/exportPdf';
 import { useAnimatedCounter } from '../hooks/useAnimatedCounter';
 import { formatCurrency, formatCurrencyCounter } from '../hooks/useSettings';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import styles from '../styles/shared.module.css';
+import sharedStyles from '../styles/shared.module.css';
+import tableStyles from './CrudPage.module.css';
 
-// Chart palette — values match CSS variables --chart-color-1 through --chart-color-8 in theme.css
-const CHART_COLORS = ['#00D4AA', '#58A6FF', '#F59E0B', '#3FB950', '#F85149', '#A371F7', '#D2A8FF', '#8B949E'];
+function getChartColors(): string[] {
+  const root = getComputedStyle(document.documentElement);
+  return Array.from({ length: 8 }, (_, i) => root.getPropertyValue(`--chart-color-${i + 1}`).trim() || '#8B949E');
+}
 
 const getVar = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
 const fmtCurrency = (n: number) => formatCurrency(n, 0);
 
 export default function Reports() {
+  const chartColors = getChartColors();
   const { data: report, isLoading: reportLoading } = useValuationReport();
   const { data: lowStock = [], isLoading: lowStockLoading } = useLowStockReport();
   const loading = reportLoading || lowStockLoading;
@@ -68,11 +72,11 @@ export default function Reports() {
   return (
     <>
       <Header title="Reports" />
-      <main className={styles.content}>
+      <main className={sharedStyles.content}>
         {loading ? (
           <SkeletonKpiRow />
         ) : (
-          <div className={styles.kpiRow}>
+          <div className={sharedStyles.kpiRow}>
             <KpiCard label="Total Items" value={animatedTotalItems.value} valueRef={animatedTotalItems.ref} icon={<Package size={18} />} variant="teal" delay={50} />
             <KpiCard label="Categories" value={animatedCategories.value} valueRef={animatedCategories.ref} icon={<Layers size={18} />} variant="blue" delay={100} />
             <KpiCard label="Total Value" value={animatedTotalValue.value} valueRef={animatedTotalValue.ref} icon={<DollarSign size={18} />} variant="green" delay={150} />
@@ -80,7 +84,7 @@ export default function Reports() {
           </div>
         )}
 
-        <div className={styles.contentGridFull}>
+        <div className={sharedStyles.contentGridFull}>
           <Card title="Value by Category" actions={catData.length > 0 ? <ExportDropdown onExportCsv={handleExportCategoriesCsv} onExportPdf={handleExportCategoriesPdf} /> : undefined}>
             {catData.length > 0 ? (
               <ResponsiveContainer width="100%" height={220}>
@@ -88,11 +92,11 @@ export default function Reports() {
                   <XAxis type="number" tick={{ fill: getVar('--text-muted'), fontSize: 10, fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
                   <YAxis type="category" dataKey="name" tick={{ fill: getVar('--text-muted'), fontSize: 11 }} axisLine={false} tickLine={false} width={80} />
                   <Tooltip contentStyle={{ background: getVar('--bg-surface'), border: `1px solid ${getVar('--border-muted')}`, borderRadius: 8, fontSize: 12 }} labelStyle={{ color: getVar('--text-primary') }} formatter={(value) => [fmtCurrency(Number(value)), 'Value']} />
-                  <Bar dataKey="value" fill={CHART_COLORS[0]} radius={[0, 3, 3, 0]} />
+                  <Bar dataKey="value" fill={chartColors[0]} radius={[0, 3, 3, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className={styles.emptyState}>No data</div>
+              <div className={sharedStyles.emptyState}>No data</div>
             )}
           </Card>
 
@@ -101,13 +105,13 @@ export default function Reports() {
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
                   <Pie data={whData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={2}>
-                    {whData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                    {whData.map((_, i) => <Cell key={i} fill={chartColors[i % chartColors.length]} />)}
                   </Pie>
                   <Tooltip contentStyle={{ background: getVar('--bg-surface'), border: `1px solid ${getVar('--border-muted')}`, borderRadius: 8, fontSize: 12 }} labelStyle={{ color: getVar('--text-primary') }} formatter={(value) => [fmtCurrency(Number(value)), 'Value']} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className={styles.emptyState}>No data</div>
+              <div className={sharedStyles.emptyState}>No data</div>
             )}
           </Card>
         </div>
@@ -115,34 +119,36 @@ export default function Reports() {
         {lowStock.length > 0 && (
           <div style={{ marginTop: 16 }}>
             <Card title="Low Stock Alerts" count={lowStock.length} noPadding>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                <thead>
-                  <tr>
-                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--text-muted)', fontWeight: 600, background: 'var(--bg-elevated)', borderBottom: '1px solid var(--border-muted)' }}>SKU</th>
-                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--text-muted)', fontWeight: 600, background: 'var(--bg-elevated)', borderBottom: '1px solid var(--border-muted)' }}>Name</th>
-                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--text-muted)', fontWeight: 600, background: 'var(--bg-elevated)', borderBottom: '1px solid var(--border-muted)' }}>Warehouse</th>
-                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--text-muted)', fontWeight: 600, background: 'var(--bg-elevated)', borderBottom: '1px solid var(--border-muted)' }}>Current Qty</th>
-                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--text-muted)', fontWeight: 600, background: 'var(--bg-elevated)', borderBottom: '1px solid var(--border-muted)' }}>Reorder Level</th>
-                    <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--text-muted)', fontWeight: 600, background: 'var(--bg-elevated)', borderBottom: '1px solid var(--border-muted)' }}>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {lowStock.map((item) => (
-                    <tr key={item.itemId} style={{ borderBottom: '1px solid var(--border-muted)' }}>
-                      <td style={{ padding: '10px 16px', fontFamily: 'var(--font-data)', fontSize: 12 }}>{item.sku}</td>
-                      <td style={{ padding: '10px 16px', color: 'var(--text-primary)', fontWeight: 500 }}>{item.name}</td>
-                      <td style={{ padding: '10px 16px', color: 'var(--text-secondary)' }}>{item.warehouseName}</td>
-                      <td style={{ padding: '10px 16px', fontFamily: 'var(--font-data)', fontSize: 12, color: 'var(--status-danger)' }}>{item.currentQuantity}</td>
-                      <td style={{ padding: '10px 16px', fontFamily: 'var(--font-data)', fontSize: 12 }}>{item.reorderLevel}</td>
-                      <td style={{ padding: '10px 16px' }}>
-                        <StatusBadge variant={item.currentQuantity === 0 ? 'danger' : 'warning'}>
-                          {item.currentQuantity === 0 ? 'Out of Stock' : 'Low Stock'}
-                        </StatusBadge>
-                      </td>
+              <div className={tableStyles.tableWrap}>
+                <table className={tableStyles.table}>
+                  <thead>
+                    <tr>
+                      <th>SKU</th>
+                      <th>Name</th>
+                      <th>Warehouse</th>
+                      <th>Current Qty</th>
+                      <th>Reorder Level</th>
+                      <th>Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {lowStock.map((item) => (
+                      <tr key={item.itemId}>
+                        <td className={tableStyles.mono}>{item.sku}</td>
+                        <td className={tableStyles.primary}>{item.name}</td>
+                        <td>{item.warehouseName}</td>
+                        <td className={tableStyles.mono} style={{ color: 'var(--status-danger)' }}>{item.currentQuantity}</td>
+                        <td className={tableStyles.mono}>{item.reorderLevel}</td>
+                        <td>
+                          <StatusBadge variant={item.currentQuantity === 0 ? 'danger' : 'warning'}>
+                            {item.currentQuantity === 0 ? 'Out of Stock' : 'Low Stock'}
+                          </StatusBadge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </Card>
           </div>
         )}

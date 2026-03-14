@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, BarChart3, Package, Tags, Warehouse as WarehouseIcon,
@@ -5,6 +6,7 @@ import {
 } from 'lucide-react';
 import { getTenantId } from '../../api/client';
 import { useAuth } from '../../hooks/useAuth';
+import ConfirmDialog from '../shared/ConfirmDialog';
 import styles from './Sidebar.module.css';
 
 const navGroups = [
@@ -53,6 +55,7 @@ interface SidebarProps {
 export default function Sidebar({ lowStockCount, apiLatency, apiConnected = true, mobileOpen, onClose }: SidebarProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const badgeCount = lowStockCount && lowStockCount > 0 ? lowStockCount : undefined;
 
   function handleLogout() {
@@ -115,7 +118,7 @@ export default function Sidebar({ lowStockCount, apiLatency, apiConnected = true
               <div className={styles.userName}>{user.fullName || user.email}</div>
               <div className={styles.userEmail}>{user.email}</div>
             </div>
-            <button className={styles.logoutBtn} onClick={handleLogout} title="Sign out">
+            <button className={styles.logoutBtn} onClick={() => setLogoutConfirmOpen(true)} title="Sign out">
               <LogOut size={14} />
             </button>
           </div>
@@ -132,11 +135,33 @@ export default function Sidebar({ lowStockCount, apiLatency, apiConnected = true
   if (mobileOpen) {
     return (
       <>
-        <div className={styles.backdrop} onClick={onClose} />
+        <div className={styles.backdrop} onClick={onClose} role="presentation" />
         {sidebarContent}
+        <ConfirmDialog
+          open={logoutConfirmOpen}
+          title="Sign Out"
+          message="Are you sure you want to sign out?"
+          confirmLabel="Sign Out"
+          variant="warning"
+          onConfirm={() => { setLogoutConfirmOpen(false); handleLogout(); }}
+          onCancel={() => setLogoutConfirmOpen(false)}
+        />
       </>
     );
   }
 
-  return sidebarContent;
+  return (
+    <>
+      {sidebarContent}
+      <ConfirmDialog
+        open={logoutConfirmOpen}
+        title="Sign Out"
+        message="Are you sure you want to sign out?"
+        confirmLabel="Sign Out"
+        variant="warning"
+        onConfirm={() => { setLogoutConfirmOpen(false); handleLogout(); }}
+        onCancel={() => setLogoutConfirmOpen(false)}
+      />
+    </>
+  );
 }

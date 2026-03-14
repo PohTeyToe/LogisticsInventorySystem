@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Plus, Trash2, Edit3, Download, Search } from 'lucide-react';
+import { Plus, Trash2, Edit3, Search } from 'lucide-react';
 import Header from '../components/layout/Header';
 import Card from '../components/shared/Card';
 import Button from '../components/shared/Button';
@@ -7,12 +7,15 @@ import Modal from '../components/shared/Modal';
 import FormField from '../components/shared/FormField';
 import StatusBadge from '../components/shared/StatusBadge';
 import SkeletonTable from '../components/shared/SkeletonTable';
+import ErrorState from '../components/shared/ErrorState';
 import ToastContainer from '../components/shared/ToastContainer';
 import Pagination from '../components/shared/Pagination';
 import BulkActionBar from '../components/shared/BulkActionBar';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
 import { useWarehousesList, useCreateWarehouse, useUpdateWarehouse, useDeleteWarehouse } from '../hooks/queries/useWarehouseQueries';
 import { exportToCsv } from '../utils/exportCsv';
+import { exportTableToPdf } from '../utils/exportPdf';
+import ExportDropdown from '../components/shared/ExportDropdown';
 import { useToast } from '../hooks/useToastSimple';
 import { useBulkSelect } from '../hooks/useBulkSelect';
 import { useTableSort } from '../hooks/useTableSort';
@@ -42,7 +45,7 @@ export default function Warehouses() {
   const bulk = useBulkSelect();
   const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
 
-  const { data: items = [], isLoading: loading } = useWarehousesList();
+  const { data: items = [], isLoading: loading, isError, refetch } = useWarehousesList();
   const createMutation = useCreateWarehouse();
   const updateMutation = useUpdateWarehouse();
   const deleteMutation = useDeleteWarehouse();
@@ -105,13 +108,22 @@ export default function Warehouses() {
     }
   };
 
-  const handleExport = () => {
+  const handleExportCsv = () => {
     const headers = ['Name', 'Address', 'Capacity', 'Item Count', 'Utilization %', 'Active'];
     const rows = items.map((item) => [
       item.name, item.address || '', item.capacity, item.itemCount,
       item.utilizationPercentage, item.isActive ? 'Yes' : 'No',
     ]);
     exportToCsv('warehouses.csv', headers, rows);
+  };
+
+  const handleExportPdf = () => {
+    const headers = ['Name', 'Address', 'Capacity', 'Item Count', 'Utilization %', 'Active'];
+    const rows = items.map((item) => [
+      item.name, item.address || '', String(item.capacity), String(item.itemCount),
+      String(item.utilizationPercentage), item.isActive ? 'Yes' : 'No',
+    ]);
+    exportTableToPdf('Warehouses', headers, rows, 'warehouses');
   };
 
   return (
@@ -129,14 +141,14 @@ export default function Warehouses() {
             />
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <Button variant="ghost" size="sm" onClick={handleExport}>
-              <Download size={14} /> Export
-            </Button>
+            <ExportDropdown onExportCsv={handleExportCsv} onExportPdf={handleExportPdf} />
             <Button variant="primary" size="md" onClick={openCreate}><Plus size={14} /> Add Warehouse</Button>
           </div>
         </div>
 
         <BulkActionBar count={bulk.count} onDelete={() => setBulkConfirmOpen(true)} onClear={bulk.clearSelection} />
+
+        {isError && !loading && <ErrorState message="Failed to load data" onRetry={() => refetch()} />}
 
         <Card title="All Warehouses" count={totalItems} noPadding>
           <div className={styles.tableWrap}>
@@ -149,6 +161,7 @@ export default function Warehouses() {
                     className={styles.checkbox}
                     checked={bulk.isAllSelected(paginatedItems.map((i) => i.id))}
                     onChange={() => bulk.toggleSelectAll(paginatedItems.map((i) => i.id))}
+                    aria-label="Select all"
                   />
                 </th>
                 <th className={styles.sortable} onClick={() => toggleSort('name')}>Name{getSortIndicator('name')}</th>
@@ -174,6 +187,7 @@ export default function Warehouses() {
                       className={styles.checkbox}
                       checked={bulk.isSelected(item.id)}
                       onChange={() => bulk.toggleSelect(item.id)}
+                      aria-label={`Select ${item.name}`}
                     />
                   </td>
                   <td className={styles.primary}>{item.name}</td>
@@ -200,8 +214,8 @@ export default function Warehouses() {
                   </td>
                   <td>
                     <div className={styles.actions}>
-                      <button className={styles.actionBtn} onClick={() => openEdit(item)}><Edit3 size={14} /></button>
-                      <button className={styles.actionBtn} onClick={() => setConfirmDelete({ id: item.id, name: item.name })}><Trash2 size={14} /></button>
+                      <button className={styles.actionBtn} onClick={() => openEdit(item)} aria-label={`Edit ${item.name}`}><Edit3 size={14} /></button>
+                      <button className={styles.actionBtn} onClick={() => setConfirmDelete({ id: item.id, name: item.name })} aria-label={`Delete ${item.name}`}><Trash2 size={14} /></button>
                     </div>
                   </td>
                 </tr>
@@ -218,7 +232,7 @@ export default function Warehouses() {
         </Card>
 
         <Modal title={editing ? 'Edit Warehouse' : 'Add Warehouse'} open={modalOpen} onClose={() => setModalOpen(false)}
-          footer={<><Button onClick={() => setModalOpen(false)}>Cancel</Button><Button variant="primary" size="md" onClick={handleSave}>{editing ? 'Update' : 'Create'}</Button></>}>
+          footer={<><Button onClick={() => setModalOpen(false)}>Cancel</Button><Button variant="primary" size="md" onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>{createMutation.isPending || updateMutation.isPending ? 'Saving...' : editing ? 'Update' : 'Create'}</Button></>}>
           <FormField label="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Warehouse name" />
           <FormField label="Address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Address" />
           <FormField label="Capacity" type="number" value={form.capacity} onChange={(e) => setForm({ ...form, capacity: Number(e.target.value) })} />

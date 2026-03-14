@@ -35,11 +35,6 @@ client.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('auth_token');
-      window.location.href = '/login';
-      return Promise.reject(error);
-    }
     if (error.response?.status === 429) {
       console.warn('Rate limited — retrying in 2s');
       return new Promise((resolve) => {

@@ -6,11 +6,12 @@ interface FormFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string;
 }
 
-export default function FormField({ label, error, ...props }: FormFieldProps) {
+export default function FormField({ label, error, id, ...props }: FormFieldProps) {
+  const fieldId = id || label.toLowerCase().replace(/\s+/g, '-');
   return (
     <div className={styles.field}>
-      <label className={styles.label}>{label}</label>
-      <input className={`${styles.input} ${error ? styles.error : ''}`} {...props} />
+      <label className={styles.label} htmlFor={fieldId}>{label}</label>
+      <input id={fieldId} className={`${styles.input} ${error ? styles.error : ''}`} {...props} />
       {error && <span className={styles.errorText}>{error}</span>}
     </div>
   );

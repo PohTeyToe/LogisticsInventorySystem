@@ -13,6 +13,7 @@ import InventoryDetail from '../components/shared/InventoryDetail';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
 import ExportDropdown from '../components/shared/ExportDropdown';
 import BulkActionBar from '../components/shared/BulkActionBar';
+import ErrorState from '../components/shared/ErrorState';
 import { useInventoryList, useCreateInventoryItem, useUpdateInventoryItem, useDeleteInventoryItem } from '../hooks/queries/useInventoryQueries';
 import { useCategoriesList } from '../hooks/queries/useCategoryQueries';
 import { useWarehousesList } from '../hooks/queries/useWarehouseQueries';
@@ -22,9 +23,21 @@ import { exportToCsv } from '../utils/exportCsv';
 import { exportTableToPdf } from '../utils/exportPdf';
 import { useToast } from '../hooks/useToastSimple';
 import { useBulkSelect } from '../hooks/useBulkSelect';
+import { useTableSort } from '../hooks/useTableSort';
+import Pagination from '../components/shared/Pagination';
 import { getPageSize, formatCurrency } from '../hooks/useSettings';
 import type { InventoryItem, CreateInventoryItemRequest } from '../types';
 import styles from './CrudPage.module.css';
+
+type SortKey = 'sku' | 'name' | 'quantity' | 'unitPrice';
+const sortAccessor = (item: InventoryItem, key: SortKey) => {
+  switch (key) {
+    case 'sku': return item.sku;
+    case 'name': return item.name;
+    case 'quantity': return item.quantity;
+    case 'unitPrice': return item.unitPrice;
+  }
+};
 
 export default function Inventory() {
   const [page, setPage] = useState(1);
@@ -50,13 +63,14 @@ export default function Inventory() {
   const pageSize = getPageSize(20);
 
   // TanStack Query hooks
-  const { data: inventoryData, isLoading: loading } = useInventoryList(page, pageSize, search || undefined);
+  const { data: inventoryData, isLoading: loading, isError, refetch } = useInventoryList(page, pageSize, search || undefined);
   const { data: categories = [] } = useCategoriesList();
   const { data: warehouses = [] } = useWarehousesList();
   const { data: drawerMovements = [] } = useItemMovementHistory(drawerItemId ?? 0);
 
   const items = inventoryData?.items ?? [];
   const totalCount = inventoryData?.totalCount ?? 0;
+  const { sortedItems, toggleSort, getSortIndicator } = useTableSort<InventoryItem, SortKey>(items, sortAccessor);
 
   const createMutation = useCreateInventoryItem();
   const updateMutation = useUpdateInventoryItem();
@@ -196,6 +210,8 @@ export default function Inventory() {
 
         <BulkActionBar count={bulk.count} onDelete={() => setBulkConfirmOpen(true)} onClear={bulk.clearSelection} />
 
+        {isError && !loading && <ErrorState message="Failed to load inventory items" onRetry={() => refetch()} />}
+
         <Card title="All Items" count={totalCount} noPadding>
           <div className={styles.tableWrap}>
           <table className={styles.table}>
@@ -205,16 +221,17 @@ export default function Inventory() {
                   <input
                     type="checkbox"
                     className={styles.checkbox}
-                    checked={bulk.isAllSelected(items.map((i) => i.id))}
-                    onChange={() => bulk.toggleSelectAll(items.map((i) => i.id))}
+                    checked={bulk.isAllSelected(sortedItems.map((i) => i.id))}
+                    onChange={() => bulk.toggleSelectAll(sortedItems.map((i) => i.id))}
+                    aria-label="Select all"
                   />
                 </th>
-                <th>SKU</th>
-                <th>Name</th>
+                <th className={styles.sortable} onClick={() => toggleSort('sku')}>SKU{getSortIndicator('sku')}</th>
+                <th className={styles.sortable} onClick={() => toggleSort('name')}>Name{getSortIndicator('name')}</th>
                 <th className={styles.hideMobile}>Category</th>
                 <th className={styles.hideMobile}>Warehouse</th>
-                <th>Qty</th>
-                <th>Unit Price</th>
+                <th className={styles.sortable} onClick={() => toggleSort('quantity')}>Qty{getSortIndicator('quantity')}</th>
+                <th className={styles.sortable} onClick={() => toggleSort('unitPrice')}>Unit Price{getSortIndicator('unitPrice')}</th>
                 <th className={styles.hideMobile}>Value</th>
                 <th>Status</th>
                 <th></th>
@@ -224,10 +241,10 @@ export default function Inventory() {
               <SkeletonTable rows={10} cols={10} />
             ) : (
             <tbody>
-              {items.length === 0 && (
+              {sortedItems.length === 0 && (
                 <tr><td colSpan={10} className={styles.empty}>No inventory items found</td></tr>
               )}
-              {items.map((item) => (
+              {sortedItems.map((item) => (
                 <tr key={item.id} onClick={() => openDetail(item)} style={{ cursor: 'pointer' }} className={bulk.isSelected(item.id) ? styles.rowSelected : ''}>
                   <td className={styles.checkboxCell} onClick={(e) => e.stopPropagation()}>
                     <input
@@ -235,6 +252,7 @@ export default function Inventory() {
                       className={styles.checkbox}
                       checked={bulk.isSelected(item.id)}
                       onChange={() => bulk.toggleSelect(item.id)}
+                      aria-label={`Select ${item.name}`}
                     />
                   </td>
                   <td className={styles.mono}>{item.sku}</td>
@@ -253,13 +271,13 @@ export default function Inventory() {
                   </td>
                   <td>
                     <div className={styles.actions}>
-                      <button className={styles.actionBtn} onClick={(e) => { e.stopPropagation(); openDetail(item); }} title="View">
+                      <button className={styles.actionBtn} onClick={(e) => { e.stopPropagation(); openDetail(item); }} title="View" aria-label="View details">
                         <Eye size={14} />
                       </button>
-                      <button className={styles.actionBtn} onClick={(e) => { e.stopPropagation(); openEdit(item); }} title="Edit">
+                      <button className={styles.actionBtn} onClick={(e) => { e.stopPropagation(); openEdit(item); }} title="Edit" aria-label="Edit item">
                         <Edit3 size={14} />
                       </button>
-                      <button className={styles.actionBtn} onClick={(e) => { e.stopPropagation(); setConfirmDelete({ id: item.id, name: item.name }); }} title="Delete">
+                      <button className={styles.actionBtn} onClick={(e) => { e.stopPropagation(); setConfirmDelete({ id: item.id, name: item.name }); }} title="Delete" aria-label="Delete item">
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -270,15 +288,12 @@ export default function Inventory() {
             )}
           </table>
           </div>
-          {totalPages > 1 && (
-            <div className={styles.pagination}>
-              <span className={styles.mono}>Page {page} of {totalPages} ({totalCount} items)</span>
-              <div className={styles.pageButtons}>
-                <Button size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Prev</Button>
-                <Button size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>Next</Button>
-              </div>
-            </div>
-          )}
+          <Pagination
+            page={page} totalPages={totalPages} pageSize={pageSize}
+            totalItems={totalCount} startIndex={(page - 1) * pageSize}
+            endIndex={Math.min(page * pageSize, totalCount)}
+            onPageChange={setPage} onPageSizeChange={() => { /* server-side page size is fixed */ }}
+          />
         </Card>
 
         <Modal
@@ -288,8 +303,8 @@ export default function Inventory() {
           footer={
             <>
               <Button onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button variant="primary" size="md" onClick={handleSave}>
-                {editing ? 'Update' : 'Create'}
+              <Button variant="primary" size="md" onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>
+                {createMutation.isPending || updateMutation.isPending ? 'Saving...' : editing ? 'Update' : 'Create'}
               </Button>
             </>
           }
@@ -301,14 +316,14 @@ export default function Inventory() {
           <FormField label="Location" value={form.location || ''} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="Shelf/Bin location" />
           <FormField label="Reorder Level" type="number" value={form.reorderLevel} onChange={(e) => setForm({ ...form, reorderLevel: Number(e.target.value) })} />
           <div className={styles.selectField}>
-            <label className={styles.selectLabel}>Category</label>
-            <select className={styles.select} value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: Number(e.target.value) })}>
+            <label className={styles.selectLabel} htmlFor="category">Category</label>
+            <select id="category" className={styles.select} value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: Number(e.target.value) })}>
               {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
           <div className={styles.selectField}>
-            <label className={styles.selectLabel}>Warehouse</label>
-            <select className={styles.select} value={form.warehouseId} onChange={(e) => setForm({ ...form, warehouseId: Number(e.target.value) })}>
+            <label className={styles.selectLabel} htmlFor="warehouse">Warehouse</label>
+            <select id="warehouse" className={styles.select} value={form.warehouseId} onChange={(e) => setForm({ ...form, warehouseId: Number(e.target.value) })}>
               {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
             </select>
           </div>
