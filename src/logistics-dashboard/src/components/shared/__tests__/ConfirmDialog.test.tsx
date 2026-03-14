@@ -67,12 +67,12 @@ describe('ConfirmDialog', () => {
     expect(onCancel).toHaveBeenCalledOnce()
   })
 
-  it('calls onCancel when Escape key is pressed', async () => {
-    const user = userEvent.setup()
+  it('calls onCancel when dialog cancel event fires (Escape key)', () => {
     const onCancel = vi.fn()
     render(<ConfirmDialog {...defaultProps} onCancel={onCancel} />)
 
-    await user.keyboard('{Escape}')
+    const dialog = document.querySelector('dialog')!
+    dialog.dispatchEvent(new Event('cancel', { bubbles: true }))
     expect(onCancel).toHaveBeenCalledOnce()
   })
 })

@@ -91,16 +91,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Set up Axios interceptors for auth header and 401 handling
+  // Set up Axios interceptor for 401 handling (auth header is set in client.ts)
   useEffect(() => {
-    const requestInterceptor = client.interceptors.request.use((config) => {
-      const token = localStorage.getItem(TOKEN_KEY);
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    });
-
     const responseInterceptor = client.interceptors.response.use(
       (response) => response,
       async (error) => {
@@ -144,7 +136,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     return () => {
-      client.interceptors.request.eject(requestInterceptor);
       client.interceptors.response.eject(responseInterceptor);
     };
   }, []);

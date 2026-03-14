@@ -132,7 +132,7 @@ export default function Sidebar({ lowStockCount, apiLatency, apiConnected = true
   if (mobileOpen) {
     return (
       <>
-        <div className={styles.backdrop} onClick={onClose} />
+        <div className={styles.backdrop} onClick={onClose} role="presentation" />
         {sidebarContent}
       </>
     );
