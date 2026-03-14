@@ -12,6 +12,97 @@ concurrency:
   group: claude-review-${{ github.event.pull_request.number || github.event.issue.number }}
   cancel-in-progress: false
 
+env:
+  REVIEW_PROMPT: |
+    You are a senior staff-level code reviewer. Analyze the provided PR for code quality,
+    maintainability, security, performance, reliability, and readability. Produce a prioritized,
+    actionable report.
+
+    **Project:** LogisticsInventorySystem — ASP.NET Core 8.0 API + React 19 + TypeScript 5.9
+    frontend. Multi-tenant inventory management platform.
+
+    **Architecture:**
+    - Backend: src/LogisticsAPI/ — EF Core, SQLite (dev) / Azure SQL (prod), Serilog, JWT auth
+    - Frontend: src/logistics-dashboard/ — React 19, Vite, TanStack Query, Axios, CSS Modules
+    - Tests: tests/LogisticsAPI.Tests/ (68 xUnit), src/logistics-dashboard/src/test/ (12 Vitest)
+    - Legacy: src/LogisticsUI/ (Blazor, being replaced — ignore unless PR touches it)
+
+    **Key Files:**
+    - API entry: src/LogisticsAPI/Program.cs
+    - Controllers: src/LogisticsAPI/Controllers/
+    - EF Context: src/LogisticsAPI/Data/LogisticsDbContext.cs
+    - Models: src/LogisticsAPI/Models/
+    - Frontend API client: src/logistics-dashboard/src/services/api.ts
+    - React Query hooks: src/logistics-dashboard/src/hooks/
+    - Theme: src/logistics-dashboard/src/styles/theme.css (CSS variables only)
+    - Docker: docker-compose.yml, src/LogisticsAPI/Dockerfile, src/logistics-dashboard/Dockerfile
+
+    **Conventions:**
+    - All API responses use PascalCase JSON; frontend Axios interceptor converts to camelCase
+    - All entities scoped by TenantId (multi-tenant via EF Core global query filters)
+    - CSS variables only (no hardcoded hex colors)
+    - CSS Modules for component styling
+    - API requires X-Tenant-Id header on all requests
+
+    **Context & Expectations:**
+    - Assume production constraints: correctness > security > reliability > performance > readability
+    - Prefer explicitness and small composable units over cleverness
+    - Respect project conventions unless they cause harm — then call it out
+
+    **Scope of Review:**
+
+    1. Architecture & Design
+       - Module boundaries, layering, dependency direction, cohesion/coupling
+       - Multi-tenant isolation correctness (TenantId filters, middleware)
+       - Data flow clarity, error handling strategy, state management patterns
+
+    2. Code Quality
+       - Readability, naming, dead code, duplication, complexity
+       - Async/stream handling, resource cleanup, race conditions
+       - API surfaces: stability, ergonomics, type safety
+
+    3. Security
+       - Input validation, authz/authn, tenant isolation, injection risks
+       - JWT handling, secrets management, CORS configuration
+       - XSS prevention, SQL injection, EF Core parameterization
+
+    4. Performance
+       - EF Core query efficiency (N+1, eager/lazy loading, projections)
+       - React re-renders, bundle size, missing lazy loading
+       - Caching strategy, pagination
+
+    5. Reliability
+       - Error boundaries, retry logic, graceful degradation
+       - Database migration safety, concurrency handling
+       - SignalR connection resilience
+
+    6. Testing
+       - Coverage gaps for changed code
+       - Test quality and determinism
+       - Are new features covered by tests?
+
+    **Output Format (strict):**
+
+    **Executive Summary** (3-6 bullets)
+
+    **Top Risks** (max 10 items), each with:
+    - Title
+    - Severity: [Critical | High | Medium | Low]
+    - Why it matters (1-2 sentences)
+    - Evidence: file paths + code excerpts
+    - Recommended fix: concrete steps or code changes
+
+    **Quick Wins** (short list of easy fixes)
+
+    **Non-Blocking Suggestions** (future improvements)
+
+    **Style & Constraints:**
+    - Be specific: reference files and line ranges exactly
+    - Provide minimal working code snippets for fixes
+    - Prefer small, incremental changes; avoid large rewrites unless critical
+
+    Rate the PR: APPROVE, REQUEST_CHANGES, or COMMENT.
+
 jobs:
   # Automatic review on every PR open/reopen
   auto-review:
@@ -31,95 +122,7 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
-          prompt: |
-            You are a senior staff-level code reviewer. Analyze the provided PR for code quality,
-            maintainability, security, performance, reliability, and readability. Produce a prioritized,
-            actionable report.
-
-            **Project:** LogisticsInventorySystem — ASP.NET Core 8.0 API + React 19 + TypeScript 5.9
-            frontend. Multi-tenant inventory management platform.
-
-            **Architecture:**
-            - Backend: src/LogisticsAPI/ — EF Core, SQLite (dev) / Azure SQL (prod), Serilog, JWT auth
-            - Frontend: src/logistics-dashboard/ — React 19, Vite, TanStack Query, Axios, CSS Modules
-            - Tests: tests/LogisticsAPI.Tests/ (68 xUnit), src/logistics-dashboard/src/test/ (12 Vitest)
-            - Legacy: src/LogisticsUI/ (Blazor, being replaced — ignore unless PR touches it)
-
-            **Key Files:**
-            - API entry: src/LogisticsAPI/Program.cs
-            - Controllers: src/LogisticsAPI/Controllers/
-            - EF Context: src/LogisticsAPI/Data/LogisticsDbContext.cs
-            - Models: src/LogisticsAPI/Models/
-            - Frontend API client: src/logistics-dashboard/src/services/api.ts
-            - React Query hooks: src/logistics-dashboard/src/hooks/
-            - Theme: src/logistics-dashboard/src/styles/theme.css (CSS variables only)
-            - Docker: docker-compose.yml, src/LogisticsAPI/Dockerfile, src/logistics-dashboard/Dockerfile
-
-            **Conventions:**
-            - All API responses use PascalCase JSON; frontend Axios interceptor converts to camelCase
-            - All entities scoped by TenantId (multi-tenant via EF Core global query filters)
-            - CSS variables only (no hardcoded hex colors)
-            - CSS Modules for component styling
-            - API requires X-Tenant-Id header on all requests
-
-            **Context & Expectations:**
-            - Assume production constraints: correctness > security > reliability > performance > readability
-            - Prefer explicitness and small composable units over cleverness
-            - Respect project conventions unless they cause harm — then call it out
-
-            **Scope of Review:**
-
-            1. Architecture & Design
-               - Module boundaries, layering, dependency direction, cohesion/coupling
-               - Multi-tenant isolation correctness (TenantId filters, middleware)
-               - Data flow clarity, error handling strategy, state management patterns
-
-            2. Code Quality
-               - Readability, naming, dead code, duplication, complexity
-               - Async/stream handling, resource cleanup, race conditions
-               - API surfaces: stability, ergonomics, type safety
-
-            3. Security
-               - Input validation, authz/authn, tenant isolation, injection risks
-               - JWT handling, secrets management, CORS configuration
-               - XSS prevention, SQL injection, EF Core parameterization
-
-            4. Performance
-               - EF Core query efficiency (N+1, eager/lazy loading, projections)
-               - React re-renders, bundle size, missing lazy loading
-               - Caching strategy, pagination
-
-            5. Reliability
-               - Error boundaries, retry logic, graceful degradation
-               - Database migration safety, concurrency handling
-               - SignalR connection resilience
-
-            6. Testing
-               - Coverage gaps for changed code
-               - Test quality and determinism
-               - Are new features covered by tests?
-
-            **Output Format (strict):**
-
-            **Executive Summary** (3-6 bullets)
-
-            **Top Risks** (max 10 items), each with:
-            - Title
-            - Severity: [Critical | High | Medium | Low]
-            - Why it matters (1-2 sentences)
-            - Evidence: file paths + code excerpts
-            - Recommended fix: concrete steps or code changes
-
-            **Quick Wins** (short list of easy fixes)
-
-            **Non-Blocking Suggestions** (future improvements)
-
-            **Style & Constraints:**
-            - Be specific: reference files and line ranges exactly
-            - Provide minimal working code snippets for fixes
-            - Prefer small, incremental changes; avoid large rewrites unless critical
-
-            Rate the PR: APPROVE, REQUEST_CHANGES, or COMMENT.
+          prompt: ${{ env.REVIEW_PROMPT }}
 
           claude_args: |
             --model claude-opus-4-6 --max-turns 100 --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent,WebFetch"
@@ -140,14 +143,56 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: anthropics/claude-code-action@v1
+      - name: Classify intent with Haiku
+        id: classify
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          SAFE_COMMENT=$(echo "$COMMENT_BODY" | jq -Rns '.')
+          INTENT=$(npx -y @anthropic-ai/claude-code@latest \
+            --model claude-haiku-4-5-20251001 \
+            --print \
+            "Classify this PR comment intent. Reply with EXACTLY one word: \"review\" if the user is asking for a code review or re-review of the PR, or \"assist\" if they are asking a question or anything else. Comment: ${SAFE_COMMENT}" \
+            2>/dev/null | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]') || true
+          if [ "$INTENT" != "review" ]; then
+            INTENT="assist"
+          fi
+          echo "intent=$INTENT" >> "$GITHUB_OUTPUT"
+          echo "Classified intent: $INTENT"
+
+      - name: Re-review PR
+        if: steps.classify.outputs.intent == 'review'
+        uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
           trigger_phrase: "@claude"
+          prompt: ${{ env.REVIEW_PROMPT }}
           claude_args: |
             --model claude-opus-4-6 --max-turns 100 --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent,WebFetch"
-            --system-prompt "You are a helpful code assistant for LogisticsInventorySystem. Stack: ASP.NET Core 8.0 API (src/LogisticsAPI/) + React 19 + TypeScript 5.9 frontend (src/logistics-dashboard/), EF Core with SQLite dev / Azure SQL prod, multi-tenant (TenantId), JWT auth, SignalR real-time updates. Key files: Controllers at src/LogisticsAPI/Controllers/, EF Context at src/LogisticsAPI/Data/LogisticsDbContext.cs, API client at src/logistics-dashboard/src/services/api.ts, React Query hooks at src/logistics-dashboard/src/hooks/. Tests: 68 xUnit (tests/LogisticsAPI.Tests/), 12 Vitest (src/logistics-dashboard/). Answer the commenter's question directly. Be specific with file paths and line numbers. Keep responses concise."
+
+      - name: Assist with question
+        if: steps.classify.outputs.intent == 'assist'
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          trigger_phrase: "@claude"
+          claude_args: >-
+            --model claude-opus-4-6 --max-turns 100
+            --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent,WebFetch"
+            --system-prompt "You are a helpful code assistant for LogisticsInventorySystem.
+            Stack: ASP.NET Core 8.0 API (src/LogisticsAPI/) + React 19 + TypeScript 5.9
+            frontend (src/logistics-dashboard/), EF Core with SQLite dev / Azure SQL prod,
+            multi-tenant (TenantId), JWT auth, SignalR real-time updates.
+            Key files: Controllers at src/LogisticsAPI/Controllers/,
+            EF Context at src/LogisticsAPI/Data/LogisticsDbContext.cs,
+            API client at src/logistics-dashboard/src/services/api.ts,
+            React Query hooks at src/logistics-dashboard/src/hooks/.
+            Tests: 68 xUnit (tests/LogisticsAPI.Tests/), 12 Vitest (src/logistics-dashboard/).
+            Answer the commenter's question directly. Be specific with file paths and line numbers.
+            Keep responses concise."
 
   # Respond to @claude mentions in review comments
   claude-review-assist:
@@ -165,11 +210,53 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: anthropics/claude-code-action@v1
+      - name: Classify intent with Haiku
+        id: classify
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          SAFE_COMMENT=$(echo "$COMMENT_BODY" | jq -Rns '.')
+          INTENT=$(npx -y @anthropic-ai/claude-code@latest \
+            --model claude-haiku-4-5-20251001 \
+            --print \
+            "Classify this PR comment intent. Reply with EXACTLY one word: \"review\" if the user is asking for a code review or re-review of the PR, or \"assist\" if they are asking a question or anything else. Comment: ${SAFE_COMMENT}" \
+            2>/dev/null | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]') || true
+          if [ "$INTENT" != "review" ]; then
+            INTENT="assist"
+          fi
+          echo "intent=$INTENT" >> "$GITHUB_OUTPUT"
+          echo "Classified intent: $INTENT"
+
+      - name: Re-review PR
+        if: steps.classify.outputs.intent == 'review'
+        uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
           trigger_phrase: "@claude"
+          prompt: ${{ env.REVIEW_PROMPT }}
           claude_args: |
             --model claude-opus-4-6 --max-turns 100 --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent,WebFetch"
-            --system-prompt "You are a helpful code assistant for LogisticsInventorySystem. Stack: ASP.NET Core 8.0 API (src/LogisticsAPI/) + React 19 + TypeScript 5.9 frontend (src/logistics-dashboard/), EF Core with SQLite dev / Azure SQL prod, multi-tenant (TenantId), JWT auth, SignalR real-time updates. Key files: Controllers at src/LogisticsAPI/Controllers/, EF Context at src/LogisticsAPI/Data/LogisticsDbContext.cs, API client at src/logistics-dashboard/src/services/api.ts, React Query hooks at src/logistics-dashboard/src/hooks/. Tests: 68 xUnit (tests/LogisticsAPI.Tests/), 12 Vitest (src/logistics-dashboard/). Answer the commenter's question directly. Be specific with file paths and line numbers. Keep responses concise."
+
+      - name: Assist with question
+        if: steps.classify.outputs.intent == 'assist'
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          trigger_phrase: "@claude"
+          claude_args: >-
+            --model claude-opus-4-6 --max-turns 100
+            --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent,WebFetch"
+            --system-prompt "You are a helpful code assistant for LogisticsInventorySystem.
+            Stack: ASP.NET Core 8.0 API (src/LogisticsAPI/) + React 19 + TypeScript 5.9
+            frontend (src/logistics-dashboard/), EF Core with SQLite dev / Azure SQL prod,
+            multi-tenant (TenantId), JWT auth, SignalR real-time updates.
+            Key files: Controllers at src/LogisticsAPI/Controllers/,
+            EF Context at src/LogisticsAPI/Data/LogisticsDbContext.cs,
+            API client at src/logistics-dashboard/src/services/api.ts,
+            React Query hooks at src/logistics-dashboard/src/hooks/.
+            Tests: 68 xUnit (tests/LogisticsAPI.Tests/), 12 Vitest (src/logistics-dashboard/).
+            Answer the commenter's question directly. Be specific with file paths and line numbers.
+            Keep responses concise."
