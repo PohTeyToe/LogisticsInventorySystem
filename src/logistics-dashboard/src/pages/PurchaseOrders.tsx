@@ -10,6 +10,7 @@ import ToastContainer from '../components/shared/ToastContainer';
 import Pagination from '../components/shared/Pagination';
 import DetailDrawer from '../components/shared/DetailDrawer';
 import ExportDropdown from '../components/shared/ExportDropdown';
+import ErrorState from '../components/shared/ErrorState';
 import CreatePurchaseOrderModal from '../components/purchase-orders/CreatePurchaseOrderModal';
 import PurchaseOrderDetail from '../components/purchase-orders/PurchaseOrderDetail';
 import { usePurchaseOrdersList, useUpdatePurchaseOrderStatus, purchaseOrderKeys } from '../hooks/queries/usePurchaseOrderQueries';
@@ -51,7 +52,7 @@ export default function PurchaseOrders() {
   const { toasts, addToast, dismiss } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: orders = [], isLoading: loading } = usePurchaseOrdersList(filter === 'All' ? undefined : filter);
+  const { data: orders = [], isLoading: loading, isError, refetch } = usePurchaseOrdersList(filter === 'All' ? undefined : filter);
   const statusMutation = useUpdatePurchaseOrderStatus();
 
   const filtered = useMemo(() => {
@@ -148,6 +149,8 @@ export default function PurchaseOrders() {
             </Button>
           </div>
         </div>
+
+        {isError && !loading && <ErrorState message="Failed to load purchase orders" onRetry={() => refetch()} />}
 
         <Card title="Purchase Orders" count={totalItems} noPadding>
           <div className={styles.tableWrap}>

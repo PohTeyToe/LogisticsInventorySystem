@@ -10,6 +10,7 @@ import ToastContainer from '../components/shared/ToastContainer';
 import Pagination from '../components/shared/Pagination';
 import BulkActionBar from '../components/shared/BulkActionBar';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
+import ErrorState from '../components/shared/ErrorState';
 import { useSuppliersList, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from '../hooks/queries/useSupplierQueries';
 import { getSupplierPerformance } from '../api/suppliers';
 import { exportToCsv } from '../utils/exportCsv';
@@ -47,7 +48,7 @@ export default function Suppliers() {
   const [perfData, setPerfData] = useState<SupplierPerformance | null>(null);
   const [perfLoading, setPerfLoading] = useState(false);
 
-  const { data: items = [], isLoading: loading } = useSuppliersList();
+  const { data: items = [], isLoading: loading, isError, refetch } = useSuppliersList();
   const createMutation = useCreateSupplier();
   const updateMutation = useUpdateSupplier();
   const deleteMutation = useDeleteSupplier();
@@ -161,6 +162,8 @@ export default function Suppliers() {
 
         <BulkActionBar count={bulk.count} onDelete={() => setBulkConfirmOpen(true)} onClear={bulk.clearSelection} />
 
+        {isError && !loading && <ErrorState message="Failed to load suppliers" onRetry={() => refetch()} />}
+
         <Card title="All Suppliers" count={totalItems} noPadding>
           <div className={styles.tableWrap}>
           <table className={styles.table}>
@@ -170,6 +173,7 @@ export default function Suppliers() {
                   <input
                     type="checkbox"
                     className={styles.checkbox}
+                    aria-label="Select all"
                     checked={bulk.isAllSelected(paginatedItems.map((i) => i.id))}
                     onChange={() => bulk.toggleSelectAll(paginatedItems.map((i) => i.id))}
                   />
@@ -194,6 +198,7 @@ export default function Suppliers() {
                     <input
                       type="checkbox"
                       className={styles.checkbox}
+                      aria-label={`Select ${item.name}`}
                       checked={bulk.isSelected(item.id)}
                       onChange={() => bulk.toggleSelect(item.id)}
                     />
@@ -204,9 +209,9 @@ export default function Suppliers() {
                   <td className={styles.hideMobile}>{item.address || '-'}</td>
                   <td>
                     <div className={styles.actions}>
-                      <button className={styles.actionBtn} title="Performance" onClick={() => openPerformance(item)}><BarChart3 size={14} /></button>
-                      <button className={styles.actionBtn} onClick={() => openEdit(item)}><Edit3 size={14} /></button>
-                      <button className={styles.actionBtn} onClick={() => setConfirmDelete({ id: item.id, name: item.name })}><Trash2 size={14} /></button>
+                      <button className={styles.actionBtn} title="Performance" aria-label="View performance" onClick={() => openPerformance(item)}><BarChart3 size={14} /></button>
+                      <button className={styles.actionBtn} aria-label={`Edit ${item.name}`} onClick={() => openEdit(item)}><Edit3 size={14} /></button>
+                      <button className={styles.actionBtn} aria-label={`Delete ${item.name}`} onClick={() => setConfirmDelete({ id: item.id, name: item.name })}><Trash2 size={14} /></button>
                     </div>
                   </td>
                 </tr>
@@ -223,7 +228,7 @@ export default function Suppliers() {
         </Card>
 
         <Modal title={editing ? 'Edit Supplier' : 'Add Supplier'} open={modalOpen} onClose={() => setModalOpen(false)}
-          footer={<><Button onClick={() => setModalOpen(false)}>Cancel</Button><Button variant="primary" size="md" onClick={handleSave}>{editing ? 'Update' : 'Create'}</Button></>}>
+          footer={<><Button onClick={() => setModalOpen(false)}>Cancel</Button><Button variant="primary" size="md" onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>{createMutation.isPending || updateMutation.isPending ? 'Saving...' : editing ? 'Update' : 'Create'}</Button></>}>
           <FormField label="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Supplier name" />
           <FormField label="Email" type="email" value={form.contactEmail} onChange={(e) => setForm({ ...form, contactEmail: e.target.value })} placeholder="contact@example.com" />
           <FormField label="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(555) 123-4567" />

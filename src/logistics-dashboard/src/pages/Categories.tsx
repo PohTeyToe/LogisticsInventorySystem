@@ -6,6 +6,7 @@ import Button from '../components/shared/Button';
 import Modal from '../components/shared/Modal';
 import FormField from '../components/shared/FormField';
 import SkeletonTable from '../components/shared/SkeletonTable';
+import ErrorState from '../components/shared/ErrorState';
 import ToastContainer from '../components/shared/ToastContainer';
 import Pagination from '../components/shared/Pagination';
 import BulkActionBar from '../components/shared/BulkActionBar';
@@ -42,7 +43,7 @@ export default function Categories() {
   const bulk = useBulkSelect();
   const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
 
-  const { data: items = [], isLoading: loading } = useCategoriesList();
+  const { data: items = [], isLoading: loading, isError, refetch } = useCategoriesList();
   const createMutation = useCreateCategory();
   const updateMutation = useUpdateCategory();
   const deleteMutation = useDeleteCategory();
@@ -139,6 +140,8 @@ export default function Categories() {
 
         <BulkActionBar count={bulk.count} onDelete={() => setBulkConfirmOpen(true)} onClear={bulk.clearSelection} />
 
+        {isError && !loading && <ErrorState message="Failed to load data" onRetry={() => refetch()} />}
+
         <Card title="All Categories" count={totalItems} noPadding>
           <div className={styles.tableWrap}>
           <table className={styles.table}>
@@ -150,6 +153,7 @@ export default function Categories() {
                     className={styles.checkbox}
                     checked={bulk.isAllSelected(paginatedItems.map((i) => i.id))}
                     onChange={() => bulk.toggleSelectAll(paginatedItems.map((i) => i.id))}
+                    aria-label="Select all"
                   />
                 </th>
                 <th className={styles.sortable} onClick={() => toggleSort('name')}>Name{getSortIndicator('name')}</th>
@@ -173,6 +177,7 @@ export default function Categories() {
                       className={styles.checkbox}
                       checked={bulk.isSelected(item.id)}
                       onChange={() => bulk.toggleSelect(item.id)}
+                      aria-label={`Select ${item.name}`}
                     />
                   </td>
                   <td className={styles.primary}>{item.name}</td>
@@ -180,8 +185,8 @@ export default function Categories() {
                   <td className={styles.mono}>{item.itemCount ?? '-'}</td>
                   <td>
                     <div className={styles.actions}>
-                      <button className={styles.actionBtn} onClick={() => openEdit(item)}><Edit3 size={14} /></button>
-                      <button className={styles.actionBtn} onClick={() => setConfirmDelete({ id: item.id, name: item.name })}><Trash2 size={14} /></button>
+                      <button className={styles.actionBtn} onClick={() => openEdit(item)} aria-label={`Edit ${item.name}`}><Edit3 size={14} /></button>
+                      <button className={styles.actionBtn} onClick={() => setConfirmDelete({ id: item.id, name: item.name })} aria-label={`Delete ${item.name}`}><Trash2 size={14} /></button>
                     </div>
                   </td>
                 </tr>
@@ -198,7 +203,7 @@ export default function Categories() {
         </Card>
 
         <Modal title={editing ? 'Edit Category' : 'Add Category'} open={modalOpen} onClose={() => setModalOpen(false)}
-          footer={<><Button onClick={() => setModalOpen(false)}>Cancel</Button><Button variant="primary" size="md" onClick={handleSave}>{editing ? 'Update' : 'Create'}</Button></>}>
+          footer={<><Button onClick={() => setModalOpen(false)}>Cancel</Button><Button variant="primary" size="md" onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>{createMutation.isPending || updateMutation.isPending ? 'Saving...' : editing ? 'Update' : 'Create'}</Button></>}>
           <FormField label="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Category name" />
           <FormField label="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Optional description" />
         </Modal>

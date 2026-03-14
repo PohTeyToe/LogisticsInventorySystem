@@ -13,6 +13,7 @@ import InventoryDetail from '../components/shared/InventoryDetail';
 import ConfirmDialog from '../components/shared/ConfirmDialog';
 import ExportDropdown from '../components/shared/ExportDropdown';
 import BulkActionBar from '../components/shared/BulkActionBar';
+import ErrorState from '../components/shared/ErrorState';
 import { useInventoryList, useCreateInventoryItem, useUpdateInventoryItem, useDeleteInventoryItem } from '../hooks/queries/useInventoryQueries';
 import { useCategoriesList } from '../hooks/queries/useCategoryQueries';
 import { useWarehousesList } from '../hooks/queries/useWarehouseQueries';
@@ -62,7 +63,7 @@ export default function Inventory() {
   const pageSize = getPageSize(20);
 
   // TanStack Query hooks
-  const { data: inventoryData, isLoading: loading } = useInventoryList(page, pageSize, search || undefined);
+  const { data: inventoryData, isLoading: loading, isError, refetch } = useInventoryList(page, pageSize, search || undefined);
   const { data: categories = [] } = useCategoriesList();
   const { data: warehouses = [] } = useWarehousesList();
   const { data: drawerMovements = [] } = useItemMovementHistory(drawerItemId ?? 0);
@@ -209,6 +210,8 @@ export default function Inventory() {
 
         <BulkActionBar count={bulk.count} onDelete={() => setBulkConfirmOpen(true)} onClear={bulk.clearSelection} />
 
+        {isError && !loading && <ErrorState message="Failed to load inventory items" onRetry={() => refetch()} />}
+
         <Card title="All Items" count={totalCount} noPadding>
           <div className={styles.tableWrap}>
           <table className={styles.table}>
@@ -220,6 +223,7 @@ export default function Inventory() {
                     className={styles.checkbox}
                     checked={bulk.isAllSelected(sortedItems.map((i) => i.id))}
                     onChange={() => bulk.toggleSelectAll(sortedItems.map((i) => i.id))}
+                    aria-label="Select all"
                   />
                 </th>
                 <th className={styles.sortable} onClick={() => toggleSort('sku')}>SKU{getSortIndicator('sku')}</th>
@@ -248,6 +252,7 @@ export default function Inventory() {
                       className={styles.checkbox}
                       checked={bulk.isSelected(item.id)}
                       onChange={() => bulk.toggleSelect(item.id)}
+                      aria-label={`Select ${item.name}`}
                     />
                   </td>
                   <td className={styles.mono}>{item.sku}</td>
@@ -266,13 +271,13 @@ export default function Inventory() {
                   </td>
                   <td>
                     <div className={styles.actions}>
-                      <button className={styles.actionBtn} onClick={(e) => { e.stopPropagation(); openDetail(item); }} title="View">
+                      <button className={styles.actionBtn} onClick={(e) => { e.stopPropagation(); openDetail(item); }} title="View" aria-label="View details">
                         <Eye size={14} />
                       </button>
-                      <button className={styles.actionBtn} onClick={(e) => { e.stopPropagation(); openEdit(item); }} title="Edit">
+                      <button className={styles.actionBtn} onClick={(e) => { e.stopPropagation(); openEdit(item); }} title="Edit" aria-label="Edit item">
                         <Edit3 size={14} />
                       </button>
-                      <button className={styles.actionBtn} onClick={(e) => { e.stopPropagation(); setConfirmDelete({ id: item.id, name: item.name }); }} title="Delete">
+                      <button className={styles.actionBtn} onClick={(e) => { e.stopPropagation(); setConfirmDelete({ id: item.id, name: item.name }); }} title="Delete" aria-label="Delete item">
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -298,8 +303,8 @@ export default function Inventory() {
           footer={
             <>
               <Button onClick={() => setModalOpen(false)}>Cancel</Button>
-              <Button variant="primary" size="md" onClick={handleSave}>
-                {editing ? 'Update' : 'Create'}
+              <Button variant="primary" size="md" onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>
+                {createMutation.isPending || updateMutation.isPending ? 'Saving...' : editing ? 'Update' : 'Create'}
               </Button>
             </>
           }
