@@ -88,7 +88,8 @@ Only runs when these paths change:
 ## claude-review.yml — AI Code Review
 
 ### Configuration
-- **Model:** claude-opus-4-6
+- **Review model:** claude-opus-4-6
+- **Classifier model:** claude-haiku-4-5-20251001 (intent detection only)
 - **Max turns:** 100
 - **Tools:** Bash, Read, Write, Edit, Glob, Grep, Agent, WebFetch
 
@@ -101,20 +102,20 @@ Only runs when these paths change:
 - Review prompt is defined once in the workflow-level `env.REVIEW_PROMPT` block
 
 #### 2. claude-assist (on `@claude` in PR comments)
-- **Smart routing:** automatically detects whether the comment is a re-review request or a general question
-- Re-review requests (e.g. "re-review", "review again", "check the changes") produce the same structured staff-level review as auto-review
-- General questions get concise, targeted answers with file paths and line numbers
-- Has full project context via system prompt
+- **Smart routing via Haiku classifier:** a lightweight Haiku CLI call classifies the comment as `review` or `assist` before invoking Opus
+- Re-review requests (e.g. "re-review", "review again", "check the changes") get routed to the full staff-level review prompt (`env.REVIEW_PROMPT`)
+- General questions get routed to a concise assistant with project context
+- Classifier runs via `npx @anthropic-ai/claude-code --model claude-haiku-4-5-20251001 --print`, defaults to `assist` on failure
 
 #### 3. claude-review-assist (on `@claude` in review comments)
-- Same smart routing as claude-assist but for inline review comment threads
+- Same Haiku classifier + conditional routing as claude-assist, for inline review comment threads
 
 ### Usage
 - **Auto review:** Opens automatically on new PRs
 - **Ask a question:** Comment `@claude <your question>` on a PR
-- **Re-review after changes:** Comment `@claude please re-review this PR` — produces full structured review
-- **Targeted:** `@claude is the tenant isolation fixed in this controller?` — gets a concise answer
-- Smart routing means you don't need separate commands — Claude detects intent automatically
+- **Re-review after changes:** Comment `@claude please re-review this PR` — Haiku classifies as `review`, Opus produces full structured review
+- **Targeted:** `@claude is the tenant isolation fixed in this controller?` — Haiku classifies as `assist`, gets a concise answer
+- Routing is automatic — Haiku decides in ~1 second, then the correct Opus prompt runs
 
 ### Troubleshooting
 

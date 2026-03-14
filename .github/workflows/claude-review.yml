@@ -143,7 +143,38 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: anthropics/claude-code-action@v1
+      - name: Classify intent with Haiku
+        id: classify
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          SAFE_COMMENT=$(echo "$COMMENT_BODY" | jq -Rns '.')
+          INTENT=$(npx -y @anthropic-ai/claude-code@latest \
+            --model claude-haiku-4-5-20251001 \
+            --print \
+            "Classify this PR comment intent. Reply with EXACTLY one word: \"review\" if the user is asking for a code review or re-review of the PR, or \"assist\" if they are asking a question or anything else. Comment: ${SAFE_COMMENT}" \
+            2>/dev/null | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]') || true
+          if [ "$INTENT" != "review" ]; then
+            INTENT="assist"
+          fi
+          echo "intent=$INTENT" >> "$GITHUB_OUTPUT"
+          echo "Classified intent: $INTENT"
+
+      - name: Re-review PR
+        if: steps.classify.outputs.intent == 'review'
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          trigger_phrase: "@claude"
+          prompt: ${{ env.REVIEW_PROMPT }}
+          claude_args: |
+            --model claude-opus-4-6 --max-turns 100 --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent,WebFetch"
+
+      - name: Assist with question
+        if: steps.classify.outputs.intent == 'assist'
+        uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
@@ -151,53 +182,17 @@ jobs:
           claude_args: >-
             --model claude-opus-4-6 --max-turns 100
             --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent,WebFetch"
-            --system-prompt "You are a code assistant for LogisticsInventorySystem.
-            [ROUTING] First, determine what the commenter is asking for.
-            If they are requesting a RE-REVIEW or another look at the PR
-            (phrases like 're-review', 'review again', 'look at this again',
-            'check the changes', 'review the updates', 'another review',
-            'take another look'), then perform a FULL staff-level code review
-            using the review format described below.
-            Otherwise, answer their question directly. Be specific with file
-            paths and line numbers. Keep responses concise.
-            [REVIEW FORMAT — use ONLY for re-review requests]
-            Produce this exact structure:
-            **Executive Summary** (3-6 bullets).
-            **Top Risks** (max 10), each with: Title, Severity [Critical|High|Medium|Low],
-            Why it matters (1-2 sentences), Evidence with file paths and code excerpts,
-            Recommended fix with concrete steps or code changes.
-            **Quick Wins** (short list of easy fixes).
-            **Non-Blocking Suggestions** (future improvements).
-            Be specific: reference files and line ranges exactly.
-            Provide minimal working code snippets for fixes.
-            Prefer small incremental changes; avoid large rewrites unless critical.
-            Rate the PR: APPROVE, REQUEST_CHANGES, or COMMENT.
-            [REVIEW SCOPE — check these areas during re-review]
-            1. Architecture and Design: module boundaries, layering, dependency direction,
-            cohesion/coupling, multi-tenant isolation (TenantId filters, middleware),
-            data flow, error handling, state management.
-            2. Code Quality: readability, naming, dead code, duplication, complexity,
-            async/stream handling, resource cleanup, race conditions, type safety.
-            3. Security: input validation, authz/authn, tenant isolation, injection risks,
-            JWT handling, secrets management, CORS, XSS, SQL injection, EF Core parameterization.
-            4. Performance: EF Core queries (N+1, eager/lazy loading, projections),
-            React re-renders, bundle size, lazy loading, caching, pagination.
-            5. Reliability: error boundaries, retry logic, graceful degradation,
-            migration safety, concurrency, SignalR resilience.
-            6. Testing: coverage gaps, test quality, determinism, new features covered.
-            [PROJECT CONTEXT — use for all responses]
+            --system-prompt "You are a helpful code assistant for LogisticsInventorySystem.
             Stack: ASP.NET Core 8.0 API (src/LogisticsAPI/) + React 19 + TypeScript 5.9
-            frontend (src/logistics-dashboard/). EF Core with SQLite dev / Azure SQL prod.
-            Multi-tenant (TenantId), JWT auth, SignalR real-time updates.
+            frontend (src/logistics-dashboard/), EF Core with SQLite dev / Azure SQL prod,
+            multi-tenant (TenantId), JWT auth, SignalR real-time updates.
             Key files: Controllers at src/LogisticsAPI/Controllers/,
             EF Context at src/LogisticsAPI/Data/LogisticsDbContext.cs,
             API client at src/logistics-dashboard/src/services/api.ts,
-            React Query hooks at src/logistics-dashboard/src/hooks/,
-            Theme at src/logistics-dashboard/src/styles/theme.css.
+            React Query hooks at src/logistics-dashboard/src/hooks/.
             Tests: 68 xUnit (tests/LogisticsAPI.Tests/), 12 Vitest (src/logistics-dashboard/).
-            Conventions: PascalCase JSON responses (frontend converts to camelCase via Axios interceptor),
-            all entities scoped by TenantId, CSS variables only, CSS Modules for styling,
-            API requires X-Tenant-Id header."
+            Answer the commenter's question directly. Be specific with file paths and line numbers.
+            Keep responses concise."
 
   # Respond to @claude mentions in review comments
   claude-review-assist:
@@ -215,7 +210,38 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: anthropics/claude-code-action@v1
+      - name: Classify intent with Haiku
+        id: classify
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          SAFE_COMMENT=$(echo "$COMMENT_BODY" | jq -Rns '.')
+          INTENT=$(npx -y @anthropic-ai/claude-code@latest \
+            --model claude-haiku-4-5-20251001 \
+            --print \
+            "Classify this PR comment intent. Reply with EXACTLY one word: \"review\" if the user is asking for a code review or re-review of the PR, or \"assist\" if they are asking a question or anything else. Comment: ${SAFE_COMMENT}" \
+            2>/dev/null | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]') || true
+          if [ "$INTENT" != "review" ]; then
+            INTENT="assist"
+          fi
+          echo "intent=$INTENT" >> "$GITHUB_OUTPUT"
+          echo "Classified intent: $INTENT"
+
+      - name: Re-review PR
+        if: steps.classify.outputs.intent == 'review'
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          trigger_phrase: "@claude"
+          prompt: ${{ env.REVIEW_PROMPT }}
+          claude_args: |
+            --model claude-opus-4-6 --max-turns 100 --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent,WebFetch"
+
+      - name: Assist with question
+        if: steps.classify.outputs.intent == 'assist'
+        uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
@@ -223,50 +249,14 @@ jobs:
           claude_args: >-
             --model claude-opus-4-6 --max-turns 100
             --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent,WebFetch"
-            --system-prompt "You are a code assistant for LogisticsInventorySystem.
-            [ROUTING] First, determine what the commenter is asking for.
-            If they are requesting a RE-REVIEW or another look at the PR
-            (phrases like 're-review', 'review again', 'look at this again',
-            'check the changes', 'review the updates', 'another review',
-            'take another look'), then perform a FULL staff-level code review
-            using the review format described below.
-            Otherwise, answer their question directly. Be specific with file
-            paths and line numbers. Keep responses concise.
-            [REVIEW FORMAT — use ONLY for re-review requests]
-            Produce this exact structure:
-            **Executive Summary** (3-6 bullets).
-            **Top Risks** (max 10), each with: Title, Severity [Critical|High|Medium|Low],
-            Why it matters (1-2 sentences), Evidence with file paths and code excerpts,
-            Recommended fix with concrete steps or code changes.
-            **Quick Wins** (short list of easy fixes).
-            **Non-Blocking Suggestions** (future improvements).
-            Be specific: reference files and line ranges exactly.
-            Provide minimal working code snippets for fixes.
-            Prefer small incremental changes; avoid large rewrites unless critical.
-            Rate the PR: APPROVE, REQUEST_CHANGES, or COMMENT.
-            [REVIEW SCOPE — check these areas during re-review]
-            1. Architecture and Design: module boundaries, layering, dependency direction,
-            cohesion/coupling, multi-tenant isolation (TenantId filters, middleware),
-            data flow, error handling, state management.
-            2. Code Quality: readability, naming, dead code, duplication, complexity,
-            async/stream handling, resource cleanup, race conditions, type safety.
-            3. Security: input validation, authz/authn, tenant isolation, injection risks,
-            JWT handling, secrets management, CORS, XSS, SQL injection, EF Core parameterization.
-            4. Performance: EF Core queries (N+1, eager/lazy loading, projections),
-            React re-renders, bundle size, lazy loading, caching, pagination.
-            5. Reliability: error boundaries, retry logic, graceful degradation,
-            migration safety, concurrency, SignalR resilience.
-            6. Testing: coverage gaps, test quality, determinism, new features covered.
-            [PROJECT CONTEXT — use for all responses]
+            --system-prompt "You are a helpful code assistant for LogisticsInventorySystem.
             Stack: ASP.NET Core 8.0 API (src/LogisticsAPI/) + React 19 + TypeScript 5.9
-            frontend (src/logistics-dashboard/). EF Core with SQLite dev / Azure SQL prod.
-            Multi-tenant (TenantId), JWT auth, SignalR real-time updates.
+            frontend (src/logistics-dashboard/), EF Core with SQLite dev / Azure SQL prod,
+            multi-tenant (TenantId), JWT auth, SignalR real-time updates.
             Key files: Controllers at src/LogisticsAPI/Controllers/,
             EF Context at src/LogisticsAPI/Data/LogisticsDbContext.cs,
             API client at src/logistics-dashboard/src/services/api.ts,
-            React Query hooks at src/logistics-dashboard/src/hooks/,
-            Theme at src/logistics-dashboard/src/styles/theme.css.
+            React Query hooks at src/logistics-dashboard/src/hooks/.
             Tests: 68 xUnit (tests/LogisticsAPI.Tests/), 12 Vitest (src/logistics-dashboard/).
-            Conventions: PascalCase JSON responses (frontend converts to camelCase via Axios interceptor),
-            all entities scoped by TenantId, CSS variables only, CSS Modules for styling,
-            API requires X-Tenant-Id header."
+            Answer the commenter's question directly. Be specific with file paths and line numbers.
+            Keep responses concise."
