@@ -6,16 +6,18 @@ on:
 
 jobs:
   check-review-freshness:
+    name: Review Freshness
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
+      statuses: write
     steps:
       - name: Check if Claude review is stale
         uses: actions/github-script@v7
         with:
           script: |
             const pr = context.payload.pull_request;
-            const latestCommitDate = new Date(pr.updated_at);
+            const sha = pr.head.sha;
 
             // Get all reviews on this PR
             const reviews = await github.rest.pulls.listReviews({
@@ -29,6 +31,14 @@ jobs:
 
             if (claudeReviews.length === 0) {
               // No review yet — auto-review will handle it on open
+              await github.rest.repos.createCommitStatus({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                sha,
+                state: 'success',
+                context: 'Review Freshness',
+                description: 'Waiting for initial Claude review',
+              });
               return;
             }
 
@@ -47,10 +57,27 @@ jobs:
             );
 
             if (commitsAfterReview.length === 0) {
+              await github.rest.repos.createCommitStatus({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                sha,
+                state: 'success',
+                context: 'Review Freshness',
+                description: 'Claude review is up to date',
+              });
               return;
             }
 
-            // Check if we already posted a reminder for this state
+            // Stale review — set warning status and post/update comment
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha,
+              state: 'pending',
+              context: 'Review Freshness',
+              description: `${commitsAfterReview.length} commit(s) since last Claude review — consider re-review`,
+            });
+
             const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -64,7 +91,7 @@ jobs:
 
             const body = [
               `<!-- REVIEW_REMINDER -->`,
-              `**📋 Review reminder:** ${commitsAfterReview.length} commit(s) pushed since the last Claude review.`,
+              `**Review reminder:** ${commitsAfterReview.length} commit(s) pushed since the last Claude review.`,
               ``,
               `Consider requesting a re-review before merging:`,
               `\`@claude please re-review this PR\``,
