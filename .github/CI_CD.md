@@ -12,6 +12,8 @@ Complete reference for all GitHub Actions workflows, secrets, and troubleshootin
 | CodeQL | `codeql.yml` | PR + weekly (Monday 6am UTC) | Security scanning (C# + JS/TS) |
 | Commit Lint | `commit-lint.yml` | PR title | Conventional commit enforcement |
 | Vercel Preview | `vercel-preview.yml` | PR (frontend paths) | Preview deploy URLs on PRs |
+| Vercel Staging | `vercel-staging.yml` | Push to main (frontend paths) | Deploy frontend to Vercel production |
+| Azure Frontend | `azure-frontend.yml` | Push to main (frontend paths) | Deploy frontend to Azure SWA mirror |
 | Dependabot | `dependabot.yml` | Weekly/monthly schedule | Dependency updates |
 
 All workflows use **concurrency groups** — pushing new commits to a PR branch cancels in-progress runs (except Claude review, which completes).
@@ -130,6 +132,9 @@ Only runs when these paths change:
 | `AZURE_WEBAPP_PUBLISH_PROFILE` | Azure App Service deployment | Azure Portal > App Service > Get Publish Profile |
 | `CLAUDE_CODE_OAUTH_TOKEN` | Claude Code OAuth for PR review bot | Available as shell env var `$CLAUDE_CODE_OAUTH_TOKEN` |
 | `VERCEL_TOKEN` | Vercel CLI preview deploys | Available as shell env var `$VERCEL_TOKEN` |
+| `AZURE_STATIC_WEB_APPS_API_TOKEN` | Azure SWA deployment | `az staticwebapp secrets list --name logistics-dashboard-abdallah` |
+| `VERCEL_ORG_ID` | Vercel staging deploys | Vercel dashboard > Settings > General |
+| `VERCEL_PROJECT_ID` | Vercel staging deploys | Vercel dashboard > Settings > General |
 
 ### Setup for new repos
 Tokens are available as shell environment variables. Set them on a new repo with:
@@ -173,6 +178,51 @@ Production stays on Azure — Vercel is preview/experimental only.
 | Build fails | Check build logs in the PR comment `<details>` section |
 | No preview URL | Check if `VERCEL_TOKEN` secret is valid. Regenerate at vercel.com/account/tokens |
 | "Commit author not a member" | The reset-author step didn't run. Check Actions log |
+
+---
+
+## vercel-staging.yml — Vercel Production Deploy
+
+### Triggers
+- Push to `main` (path-filtered: frontend, workflow file)
+
+### How it works
+1. Installs Vercel CLI
+2. Pulls production config via `vercel pull`
+3. Builds with `vercel build --prod`
+4. Deploys with `vercel deploy --prebuilt --prod`
+
+No PR comments or deployment tracking — that's handled by `vercel-preview.yml` for PRs.
+
+### Troubleshooting
+
+| Problem | Fix |
+|-|-|
+| Deploy fails | Check `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` secrets |
+| Wrong environment | Ensure `--prod` flag is present in both build and deploy steps |
+
+---
+
+## azure-frontend.yml — Azure SWA Mirror Deploy
+
+### Triggers
+- Push to `main` (path-filtered: frontend, workflow file)
+- Manual dispatch (`workflow_dispatch`)
+
+### How it works
+1. Builds the React frontend with `npm run build`
+2. Uploads the `dist/` directory to Azure Static Web Apps
+3. Uses `skip_app_build: true` — we build ourselves for consistency with Vercel
+
+SPA routing handled by `staticwebapp.config.json` in the frontend directory.
+
+### Troubleshooting
+
+| Problem | Fix |
+|-|-|
+| Deploy fails | Check `AZURE_STATIC_WEB_APPS_API_TOKEN` secret. Regenerate: `az staticwebapp secrets list` |
+| 404 on routes | Verify `staticwebapp.config.json` is in the `dist/` output (Vite copies `public/` files) |
+| CORS errors | Check API CORS config in `Program.cs` includes the SWA hostname |
 
 ---
 

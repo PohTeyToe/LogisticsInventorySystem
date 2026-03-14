@@ -13,7 +13,9 @@ A multi-tenant logistics and inventory management platform built with ASP.NET Co
 |-|-|
 | API (Swagger) | [logistics-inventory-api-abdallah.azurewebsites.net/swagger](https://logistics-inventory-api-abdallah.azurewebsites.net/swagger) |
 | Health Check | [logistics-inventory-api-abdallah.azurewebsites.net/api/health](https://logistics-inventory-api-abdallah.azurewebsites.net/api/health) |
-| Frontend | Preview URLs generated per PR via Vercel |
+| Frontend (Vercel) | [logistics-dashboard.vercel.app](https://logistics-dashboard.vercel.app) |
+| Frontend (Azure) | [lemon-island-044a86a0f.1.azurestaticapps.net](https://lemon-island-044a86a0f.1.azurestaticapps.net) |
+| Frontend (Preview) | Ephemeral per-PR URLs via Vercel |
 
 > All API endpoints require an `X-Tenant-Id` header (default: `1`). Use the Swagger UI to explore and test endpoints interactively.
 
@@ -41,7 +43,9 @@ graph TB
 
     subgraph Infrastructure
         Azure[Azure App Service]
-        Vercel[Vercel — Preview]
+        AzureSWA[Azure SWA — Mirror]
+        VercelProd[Vercel — Primary]
+        VercelPreview[Vercel — Preview]
         Docker[Docker Compose]
     end
 
@@ -52,7 +56,8 @@ graph TB
     EFCore --> SQLServer
     EFCore --> AzureSQL
     Controllers -.-> Azure
-    React -.-> Vercel
+    React -.-> VercelProd
+    React -.-> AzureSWA
     Docker -.-> SQLServer
     Docker -.-> Controllers
     Docker -.-> React
@@ -81,7 +86,7 @@ graph TB
 | Backend | ASP.NET Core 8.0, Entity Framework Core, SignalR, Serilog |
 | Database | SQLite (dev), SQL Server 2022 (Docker), Azure SQL (prod) |
 | Testing | xUnit (68 tests), Vitest + RTL (69 tests), Playwright E2E |
-| CI/CD | GitHub Actions, Azure App Service, Vercel preview deploys |
+| CI/CD | GitHub Actions, Azure App Service, Azure SWA, Vercel |
 | Tooling | Docker Compose, Makefile, Dependabot, CodeQL, Claude AI review |
 
 ## Getting Started
@@ -174,7 +179,7 @@ LogisticsInventorySystem/
 ├── design-proposals/              # UI design direction mockups
 ├── docker-compose.yml             # SQL Server + API + Frontend
 ├── Makefile                       # Dev automation commands
-└── .github/workflows/             # 6 CI/CD pipelines
+└── .github/workflows/             # 8 CI/CD pipelines
 ```
 
 ## Development
@@ -212,6 +217,8 @@ LogisticsInventorySystem/
 | [Claude Review](/.github/workflows/claude-review.yml) | PR opened | AI code review via Claude |
 | [CodeQL](/.github/workflows/codeql.yml) | PR + weekly | Security scanning (C#, JS/TS) |
 | [Commit Lint](/.github/workflows/commit-lint.yml) | PR | Validate conventional commit titles |
+| [Vercel Staging](/.github/workflows/vercel-staging.yml) | Push to main (frontend paths) | Deploy frontend to Vercel production |
+| [Azure Frontend](/.github/workflows/azure-frontend.yml) | Push to main (frontend paths) | Deploy frontend to Azure SWA |
 
 Dependabot keeps NuGet, npm, Actions, and Docker dependencies current. All workflows use concurrency groups to cancel stale runs.
 
