@@ -149,11 +149,10 @@ jobs:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
-          SAFE_COMMENT=$(echo "$COMMENT_BODY" | jq -Rns '.')
           INTENT=$(npx -y @anthropic-ai/claude-code@latest \
             --model claude-haiku-4-5-20251001 \
             --print \
-            "Classify this PR comment intent. Reply with EXACTLY one word: \"review\" if the user is asking for a code review or re-review of the PR, or \"assist\" if they are asking a question or anything else. Comment: ${SAFE_COMMENT}" \
+            "Classify this PR comment intent. Reply with EXACTLY one word: review or assist. Say review if the user is asking for a code review, re-review, or another look at the PR. Say assist for everything else including questions, help requests, or explanations. Comment: $COMMENT_BODY" \
             2>/dev/null | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]') || true
           if [ "$INTENT" != "review" ]; then
             INTENT="assist"
@@ -216,11 +215,10 @@ jobs:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
-          SAFE_COMMENT=$(echo "$COMMENT_BODY" | jq -Rns '.')
           INTENT=$(npx -y @anthropic-ai/claude-code@latest \
             --model claude-haiku-4-5-20251001 \
             --print \
-            "Classify this PR comment intent. Reply with EXACTLY one word: \"review\" if the user is asking for a code review or re-review of the PR, or \"assist\" if they are asking a question or anything else. Comment: ${SAFE_COMMENT}" \
+            "Classify this PR comment intent. Reply with EXACTLY one word: review or assist. Say review if the user is asking for a code review, re-review, or another look at the PR. Say assist for everything else including questions, help requests, or explanations. Comment: $COMMENT_BODY" \
             2>/dev/null | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]') || true
           if [ "$INTENT" != "review" ]; then
             INTENT="assist"
