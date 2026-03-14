@@ -1,0 +1,221 @@
+name: Vercel Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "src/logistics-dashboard/**"
+      - ".github/workflows/vercel-preview.yml"
+
+concurrency:
+  group: vercel-${{ github.head_ref }}
+  cancel-in-progress: true
+
+env:
+  WORKING_DIR: src/logistics-dashboard
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Reset git author for Vercel
+        run: |
+          git config user.email "159722339+PohTeyToe@users.noreply.github.com"
+          git config user.name "Abdallah Safi"
+          git commit --amend --no-edit --reset-author
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Pull Vercel project settings
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: ${{ env.WORKING_DIR }}
+
+      - name: Build
+        id: build
+        run: |
+          vercel build --token=${{ secrets.VERCEL_TOKEN }} 2>&1 | tee vercel-build.log
+          echo "status=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+        working-directory: ${{ env.WORKING_DIR }}
+
+      - name: Deploy preview
+        id: deploy
+        if: steps.build.outputs.status == '0'
+        run: |
+          vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }} 2>&1 | tee -a vercel-build.log
+          echo "status=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+          url=$(grep -oP 'https://[a-zA-Z0-9-]+\.vercel\.app' vercel-build.log | tail -1)
+          echo "preview_url=$url" >> $GITHUB_OUTPUT
+        working-directory: ${{ env.WORKING_DIR }}
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: vercel-build-logs
+          path: ${{ env.WORKING_DIR }}/vercel-build.log
+          retention-days: 7
+
+      - name: Comment preview URL on PR
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const previewUrl = '${{ steps.deploy.outputs.preview_url }}';
+            const buildStatus = '${{ steps.build.outputs.status }}';
+            const deployStatus = '${{ steps.deploy.outputs.status }}';
+            const runId = '${{ github.run_id }}';
+            const repoUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}`;
+            const success = buildStatus === '0' && deployStatus === '0' && previewUrl;
+
+            const sha = context.payload.pull_request.head.sha;
+            const shortSha = sha.substring(0, 7);
+            let commitMsg = '';
+            try {
+              const { data: commit } = await github.rest.repos.getCommit({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: sha,
+              });
+              commitMsg = commit.commit.message.split('\n')[0].substring(0, 60);
+            } catch { commitMsg = 'unknown'; }
+
+            const now = new Date();
+            const displayTime = now.toLocaleDateString('en-US', {
+              month: 'short', day: 'numeric', timeZone: 'UTC',
+            }) + ', ' + now.toLocaleTimeString('en-US', {
+              hour: 'numeric', minute: '2-digit', timeZone: 'UTC', hour12: true,
+            }) + ' UTC';
+
+            // Read build log
+            let logSummary = '';
+            try {
+              const fullLog = fs.readFileSync('${{ env.WORKING_DIR }}/vercel-build.log', 'utf8');
+              const clean = fullLog.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '').replace(/\x1B\[?[0-9;]*[a-zA-Z]/g, '');
+              logSummary = clean.split('\n').slice(-50).join('\n');
+            } catch { logSummary = 'Build log not available.'; }
+
+            // Parse deployment history from existing comment
+            let history = [];
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
+              c.body.includes('## Preview Deploy')
+            );
+            if (existing) {
+              const histMatch = existing.body.match(/<!-- DEPLOY_HISTORY\n([\s\S]*?)-->/);
+              if (histMatch) {
+                history = histMatch[1].trim().split('\n').filter(Boolean).map(line => {
+                  const [s, u, t, ...m] = line.split('|');
+                  return { sha: s, url: u, time: t, msg: m.join('|') };
+                });
+              }
+            }
+
+            // Add current deployment
+            history = history.filter(h => h.sha !== shortSha);
+            history.unshift({
+              sha: shortSha,
+              url: success ? previewUrl : '',
+              time: now.toISOString(),
+              msg: commitMsg,
+            });
+            history = history.slice(0, 10);
+
+            const historyRows = history.map(h => {
+              const commitCol = `\`${h.sha}\` ${h.msg}`;
+              const previewCol = h.url ? `[Open](${h.url})` : 'Build failed';
+              const d = new Date(h.time);
+              const timeCol = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
+                + ', ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'UTC', hour12: true });
+              return `| ${commitCol} | ${previewCol} | ${timeCol} |`;
+            }).join('\n');
+
+            const historyData = history.map(h =>
+              `${h.sha}|${h.url}|${h.time}|${h.msg}`
+            ).join('\n');
+
+            const statusLine = success
+              ? `**Status:** ✅ Deployed successfully`
+              : `**Status:** ❌ Build failed`;
+            const previewLine = success
+              ? `**Preview:** ${previewUrl}`
+              : '';
+
+            const body = [
+              `## Preview Deploy`,
+              ``,
+              statusLine,
+              previewLine,
+              `**Commit:** \`${shortSha}\` ${commitMsg}`,
+              `**Updated:** ${displayTime}`,
+              ``,
+              `### Deployment History`,
+              ``,
+              `| Commit | Preview | Updated (UTC) |`,
+              `|-|-|-|`,
+              historyRows,
+              ``,
+              `<details>`,
+              `<summary>Build Logs (last 50 lines)</summary>`,
+              ``,
+              '```',
+              logSummary,
+              '```',
+              ``,
+              `</details>`,
+              ``,
+              `📦 [Full build logs](${repoUrl}/actions/runs/${runId}) · [Download artifact](${repoUrl}/actions/runs/${runId}#artifacts)`,
+              ``,
+              `Deployed via Vercel CLI — preview environment only (production is on Azure).`,
+              ``,
+              `<!-- DEPLOY_HISTORY`,
+              historyData,
+              `-->`,
+            ].filter(line => line !== '').join('\n');
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Fail workflow on build or deploy failure
+        if: always()
+        run: |
+          if [ "${{ steps.build.outputs.status }}" != "0" ]; then
+            echo "Preview build failed."
+            exit 1
+          fi
+          if [ "${{ steps.deploy.outputs.status }}" != "0" ]; then
+            echo "Preview deploy failed."
+            exit 1
+          fi
+          if [ -z "${{ steps.deploy.outputs.preview_url }}" ]; then
+            echo "Preview URL was not captured."
+            exit 1
+          fi

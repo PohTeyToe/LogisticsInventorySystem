@@ -30,7 +30,7 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+
           prompt: |
             You are a senior staff-level code reviewer. Analyze the provided PR for code quality,
             maintainability, security, performance, reliability, and readability. Produce a prioritized,
@@ -146,7 +146,7 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+
           trigger_phrase: "@claude"
           claude_args: |
             --model claude-opus-4-6 --max-turns 100 --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent,WebFetch"
@@ -171,7 +171,7 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+
           trigger_phrase: "@claude"
           claude_args: |
             --model claude-opus-4-6 --max-turns 100 --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent,WebFetch"

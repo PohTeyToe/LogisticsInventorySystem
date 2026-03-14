@@ -73,6 +73,7 @@ Logistics inventory management platform with .NET Core API and React frontend.
 - `.github/workflows/codeql.yml` — security scanning for C# and JS/TS (PRs + weekly)
 - `.github/workflows/commit-lint.yml` — validates PR titles follow conventional commits
 - `.github/dependabot.yml` — automated dependency updates (NuGet weekly, npm weekly, Actions weekly, Docker monthly)
+- `.github/workflows/vercel-preview.yml` — deploys frontend preview URLs on PRs (Vercel CLI)
 - All workflows use concurrency groups to cancel stale runs
 - Full pipeline docs: `.github/CI_CD.md`
 
@@ -80,8 +81,8 @@ Logistics inventory management platform with .NET Core API and React frontend.
 | Secret | Purpose |
 |-|-|
 | `AZURE_WEBAPP_PUBLISH_PROFILE` | Azure App Service deployment |
-| `ANTHROPIC_API_KEY` | Claude API for PR review bot |
-| `CLAUDE_CODE_OAUTH_TOKEN` | Claude Code OAuth for PR review bot (fallback) |
+| `CLAUDE_CODE_OAUTH_TOKEN` | Claude Code OAuth for PR review bot |
+| `VERCEL_TOKEN` | Vercel CLI preview deploys |
 
 ## Database
 - Dev: SQLite at `data/logistics.db`
