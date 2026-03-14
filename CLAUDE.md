@@ -98,7 +98,8 @@ Logistics inventory management platform with .NET Core API and React frontend.
 4. **Create a PR** via `gh pr create` — CI runs automatically, Claude reviews the PR
 5. **Check CI status** with `gh pr checks <pr-number>` — fix any failures
 6. **Read Claude's review** with `gh pr view <pr-number> --comments` — address feedback if needed
-7. **Merge** when CI is green: `gh pr merge <pr-number> --squash --delete-branch`
+7. **If you pushed code changes after the review**, request a re-review: comment `@claude please re-review this PR` and wait for the updated review before merging
+8. **Merge** when CI is green and review is addressed: `gh pr merge <pr-number> --squash --delete-branch`
 
 Never push directly to main — except for **docs-only changes** (`.md` files, comments, no code). Those can go straight to main.
 
