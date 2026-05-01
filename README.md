@@ -80,7 +80,7 @@ graph TB
 | Frontend | React 19, TypeScript 5.9, Vite 7, TanStack Query, Recharts, CSS Modules |
 | Backend | ASP.NET Core 8.0, Entity Framework Core, SignalR, Serilog |
 | Database | SQLite (dev), SQL Server 2022 (Docker), Azure SQL (prod) |
-| Testing | xUnit (68 tests), Vitest + RTL (69 tests), Playwright E2E |
+| Testing | xUnit (56 tests), Vitest + RTL (69 tests), Playwright E2E |
 | CI/CD | GitHub Actions, Azure App Service, Vercel preview deploys |
 | Tooling | Docker Compose, Makefile, Dependabot, CodeQL, Claude AI review |
 
@@ -170,7 +170,7 @@ LogisticsInventorySystem/
 │   │       ├── api/               # Axios client with interceptors
 │   │       └── styles/            # CSS variables and theme system
 │   └── LogisticsUI/               # Blazor Server frontend (legacy)
-├── tests/LogisticsAPI.Tests/      # 68 xUnit tests
+├── tests/LogisticsAPI.Tests/      # 56 xUnit tests (53 [Fact] + 3 [Theory])
 ├── design-proposals/              # UI design direction mockups
 ├── docker-compose.yml             # SQL Server + API + Frontend
 ├── Makefile                       # Dev automation commands
