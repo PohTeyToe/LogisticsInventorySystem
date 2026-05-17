@@ -29,7 +29,7 @@ jobs:
           git config user.name "Abdallah Safi"
           git commit --amend --no-edit --reset-author
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
 
