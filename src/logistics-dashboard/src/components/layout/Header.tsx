@@ -39,21 +39,12 @@ export default function Header({ title, showLive = false, subtitle, onSearchClic
         )}
       </div>
       <div className={styles.right}>
-        {onSearchClick ? (
+        {onSearchClick && (
           <button className={styles.searchWrap} onClick={onSearchClick} type="button">
             <Search size={14} className={styles.searchIcon} />
             <span className={styles.searchPlaceholder}>Search items, SKUs, orders...</span>
             <kbd className={styles.kbd}>{isMac ? '\u2318K' : 'Ctrl+K'}</kbd>
           </button>
-        ) : (
-          <div className={styles.searchWrap}>
-            <Search size={14} className={styles.searchIcon} />
-            <input
-              type="text"
-              className={styles.search}
-              placeholder="Search items, SKUs, orders..."
-            />
-          </div>
         )}
         {notificationSlot}
         <button className={styles.btn} title="Settings" onClick={() => navigate('/settings')}>

@@ -60,7 +60,7 @@
 
 .segActive {
   background: var(--accent-teal) !important;
-  color: #0D1117 !important;
+  color: var(--bg-surface) !important;
   font-weight: 600;
   box-shadow: 0 1px 3px rgba(0, 212, 170, 0.3);
 }
@@ -140,7 +140,7 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #FFFFFF;
+  background: var(--text-primary);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   transition: transform 0.2s ease;
 }

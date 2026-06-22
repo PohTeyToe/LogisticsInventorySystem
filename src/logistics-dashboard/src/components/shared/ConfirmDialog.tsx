@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useId } from 'react';
 import { AlertTriangle, Trash2 } from 'lucide-react';
 import styles from './ConfirmDialog.module.css';
 
@@ -23,27 +23,21 @@ export default function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
-  const overlayRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
 
   useEffect(() => {
-    if (open) {
-      cancelRef.current?.focus();
-    }
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (open && !dialog.open) dialog.showModal();
+    else if (!open && dialog.open) dialog.close();
   }, [open]);
 
   useEffect(() => {
     if (!open) return;
-
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        onCancel();
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [open, onCancel]);
+    cancelRef.current?.focus();
+  }, [open]);
 
   if (!open) return null;
 
@@ -52,18 +46,25 @@ export default function ConfirmDialog({
   const confirmStyle = variant === 'danger' ? styles.confirmBtnDanger : styles.confirmBtnWarning;
 
   return (
-    <div
+    <dialog
+      ref={dialogRef}
       className={styles.overlay}
-      ref={overlayRef}
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      onCancel={(e) => {
+        e.preventDefault();
+        onCancel();
+      }}
       onClick={(e) => {
-        if (e.target === overlayRef.current) onCancel();
+        if (e.target === dialogRef.current) onCancel();
       }}
     >
       <div className={styles.card}>
         <div className={`${styles.iconCircle} ${iconStyle}`}>
           <Icon size={24} />
         </div>
-        <div className={styles.title}>{title}</div>
+        <div className={styles.title} id={titleId}>{title}</div>
         <div className={styles.message}>{message}</div>
         <div className={styles.actions}>
           <button ref={cancelRef} className={styles.cancelBtn} onClick={onCancel}>
@@ -74,6 +75,6 @@ export default function ConfirmDialog({
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

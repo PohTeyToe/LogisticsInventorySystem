@@ -47,6 +47,11 @@
 
 .pipelineStage:hover { border-color: var(--border-subtle); }
 
+.pipelineStageActive {
+  border-color: var(--accent-teal) !important;
+  background: var(--accent-teal-dim);
+}
+
 .pipelineCount {
   font-family: var(--font-data);
   font-size: 24px;

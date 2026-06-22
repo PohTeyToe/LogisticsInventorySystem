@@ -224,6 +224,33 @@
   letter-spacing: 0.5px;
 }
 
+.resultCardDefault {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+}
+
+.resultCardDefault .resultValue {
+  color: var(--text-primary);
+}
+
+.resultCardSuccess {
+  background: rgba(63, 185, 80, 0.08);
+  border: 1px solid rgba(63, 185, 80, 0.2);
+}
+
+.resultCardSuccess .resultValue {
+  color: var(--status-success);
+}
+
+.resultCardError {
+  background: rgba(248, 81, 73, 0.08);
+  border: 1px solid rgba(248, 81, 73, 0.2);
+}
+
+.resultCardError .resultValue {
+  color: var(--status-danger);
+}
+
 /* Sortable headers */
 .sortable {
   cursor: pointer;

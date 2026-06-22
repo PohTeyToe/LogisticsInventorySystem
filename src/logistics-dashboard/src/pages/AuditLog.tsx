@@ -1,13 +1,13 @@
-import { useEffect, useState, useCallback } from 'react';
+import { Fragment, useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import Header from '../components/layout/Header';
 import Card from '../components/shared/Card';
 import SkeletonTable from '../components/shared/SkeletonTable';
 import Pagination from '../components/shared/Pagination';
 import ToastContainer from '../components/shared/ToastContainer';
-import { getAuditLogs } from '../api/auditLog';
+import { useAuditLogs } from '../hooks/queries/useAuditLogQueries';
 import { useToast } from '../hooks/useToastSimple';
-import type { AuditLogEntry, AuditAction } from '../types';
+import type { AuditAction } from '../types';
 import styles from './AuditLog.module.css';
 
 const ENTITY_TYPES = ['All', 'InventoryItem', 'Category', 'Warehouse', 'Supplier', 'PurchaseOrder', 'StockMovement'];
@@ -39,37 +39,23 @@ function formatValue(val: unknown): string {
 }
 
 export default function AuditLog() {
-  const [logs, setLogs] = useState<AuditLogEntry[]>([]);
-  const [loading, setLoading] = useState(true);
   const [entityType, setEntityType] = useState('All');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [totalCount, setTotalCount] = useState(0);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
-  const { toasts, addToast, dismiss } = useToast();
+  const { toasts, dismiss } = useToast();
 
+  const params: Record<string, string | number> = { page, pageSize };
+  if (entityType !== 'All') params.entityType = entityType;
+  if (dateFrom) params.from = new Date(dateFrom).toISOString();
+  if (dateTo) params.to = new Date(dateTo + 'T23:59:59').toISOString();
+
+  const { data, isLoading: loading } = useAuditLogs(params);
+  const logs = data?.items ?? [];
+  const totalCount = data?.totalCount ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params: Record<string, string | number> = { page, pageSize };
-      if (entityType !== 'All') params.entityType = entityType;
-      if (dateFrom) params.from = new Date(dateFrom).toISOString();
-      if (dateTo) params.to = new Date(dateTo + 'T23:59:59').toISOString();
-      const result = await getAuditLogs(params);
-      setLogs(result.items);
-      setTotalCount(result.totalCount);
-    } catch {
-      addToast('Failed to load audit logs', 'danger');
-    } finally {
-      setLoading(false);
-    }
-  }, [entityType, dateFrom, dateTo, page, pageSize, addToast]);
-
-  useEffect(() => { load(); }, [load]);
 
   const toggleRow = (id: number) => {
     setExpandedRows((prev) => {
@@ -157,8 +143,8 @@ export default function AuditLog() {
                     const parsed = parseChanges(log.changes);
                     const hasChanges = parsed !== null;
                     return (
-                      <>
-                        <tr key={log.id}>
+                      <Fragment key={log.id}>
+                        <tr>
                           <td>
                             {hasChanges && (
                               <button
@@ -224,7 +210,7 @@ export default function AuditLog() {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </Fragment>
                     );
                   })}
                 </tbody>

@@ -20,6 +20,8 @@ export default function CsvImport() {
     if (f && f.name.endsWith('.csv')) {
       setFile(f);
       setResult(null);
+    } else if (f) {
+      addToast('Only .csv files are supported', 'danger');
     }
   };
 
@@ -85,16 +87,16 @@ export default function CsvImport() {
         {result && (
           <>
             <div className={styles.resultCards} style={{ marginTop: 16 }}>
-              <div className={styles.resultCard} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)' }}>
-                <div className={styles.resultValue} style={{ color: 'var(--text-primary)' }}>{result.totalRows}</div>
+              <div className={`${styles.resultCard} ${styles.resultCardDefault}`}>
+                <div className={styles.resultValue}>{result.totalRows}</div>
                 <div className={styles.resultLabel}>Total Rows</div>
               </div>
-              <div className={styles.resultCard} style={{ background: 'rgba(63, 185, 80, 0.08)', border: '1px solid rgba(63, 185, 80, 0.2)', borderRadius: 'var(--radius-md)' }}>
-                <div className={styles.resultValue} style={{ color: 'var(--status-success)' }}>{result.successCount}</div>
+              <div className={`${styles.resultCard} ${styles.resultCardSuccess}`}>
+                <div className={styles.resultValue}>{result.successCount}</div>
                 <div className={styles.resultLabel}>Successful</div>
               </div>
-              <div className={styles.resultCard} style={{ background: 'rgba(248, 81, 73, 0.08)', border: '1px solid rgba(248, 81, 73, 0.2)', borderRadius: 'var(--radius-md)' }}>
-                <div className={styles.resultValue} style={{ color: 'var(--status-danger)' }}>{result.errorCount}</div>
+              <div className={`${styles.resultCard} ${styles.resultCardError}`}>
+                <div className={styles.resultValue}>{result.errorCount}</div>
                 <div className={styles.resultLabel}>Errors</div>
               </div>
             </div>

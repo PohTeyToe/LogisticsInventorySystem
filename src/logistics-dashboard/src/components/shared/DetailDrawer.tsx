@@ -29,8 +29,10 @@ export default function DetailDrawer({ open, onClose, children, title, width = 4
     };
   }, [open, handleKeyDown]);
 
+  if (!open) return null;
+
   return (
-    <div className={`${styles.wrapper} ${open ? styles.open : ''}`}>
+    <div className={`${styles.wrapper} ${styles.open}`}>
       <div className={styles.overlay} onClick={onClose} />
       <aside className={styles.drawer} style={{ width }}>
         <div className={styles.header}>

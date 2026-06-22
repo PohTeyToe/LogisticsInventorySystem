@@ -20,7 +20,7 @@
 .brandIcon {
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, var(--accent-teal), #00A67E);
+  background: linear-gradient(135deg, var(--accent-teal), var(--accent-teal-dark));
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
@@ -48,12 +48,6 @@
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: border-color 0.2s;
-}
-
-.tenantSwitcher:hover {
-  border-color: var(--accent-teal);
 }
 
 .tenantLabel {
